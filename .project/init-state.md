@@ -18,7 +18,7 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | --- | --- | --- | --- |
 | init-interview | concluida | 2026-09-02 | PROJECT.md, TRUTHS.md, GLOSSARY.md, ACCEPTANCE.md, OWNERS.md (commit 85e49e8) |
 | init-repo | concluida | 2026-09-02 | CODEOWNERS/checks/CLAUDE.md (commit b5d59eb); proteção da main validada por push rejeitado (409); check reprovou PR #1 de teste (fechado sem merge) |
-| init-data | pendente | | bloqueada por pasta local não conectada |
+| init-data | concluida | 2026-09-02 | .project/DATA_CATALOG.md + tests/fixtures/*.csv (5 abas, extraídas da base sintética); leitura N1 = 100% das linhas |
 | init-plugin | pendente | | |
 | init-check | pendente | | |
 
@@ -30,11 +30,11 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | B. Escopo e fronteiras | concluida | PROJECT.md (in/out, restrições) |
 | C. Stakeholders e decisão | concluida | OWNERS.md |
 | D. Entregáveis e aceite | concluida | ACCEPTANCE.md (ACC-001..006) |
-| E. Dados e fontes (inventário) | concluida | 1 fonte: 01_Base_Operacional_Sintetica.xlsx (5 bases); detalhamento no init-data |
+| E. Dados e fontes (inventário) | concluida | fonte única catalogada em DATA_CATALOG.md (status observado); consultor confirmou não haver outras fontes |
 | F. Segurança e privacidade | concluida | TRUTH-006 (dados reais fora do repo e do ambiente) |
 | G. IP e licenças | concluida | fechado por premissa (ver Premissas) |
 | H. Arquitetura inicial | concluida | PROJECT.md (programa local Python, Windows) |
-| I. Ambientes e acessos | concluida | GitHub ok; pasta local pendente (ver Blockers) |
+| I. Ambientes e acessos | concluida | GitHub ok; pasta local conectada em 2026-09-02 |
 | J. Repositório e governança | concluida | init-repo: itens 1–10 fechados (item 3 baseline n/a — sem código pré-existente; item 7 quadro adiado) |
 | K. Estratégia de testes | concluida | ACCEPTANCE.md (golden cases tier 2) |
 | L. Conhecimento canônico | concluida | TRUTHS.md (10 verdades), GLOSSARY.md (10 termos) |
@@ -53,11 +53,13 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Repo tornado PÚBLICO em 2026-09-02, por decisão do consultor, para a proteção da main valer no plano Free — aceitável apenas porque a massa é 100% sintética. Projeto real: repo privado + plano Team+ (padrão Aucta).
 - Proteção da main sem "Required approvals" (consultor solo — GitHub proíbe auto-aprovação); validação de negócio Muda-numero registrada como comentário no PR.
 - GitHub Project (quadro de backlog) adiado a pedido do consultor — item não-bloqueante.
+- Estrutura da base de PRODUÇÃO presumida idêntica à base sintética do piloto — não validado (DATA_CATALOG).
+- Parâmetro `limiar_margem_servir_baixa` (0,05) marcado "Não validado" na própria base — validar com o sponsor antes do primeiro relatório.
 
 ## Blockers
 
 - Conector GitHub sem permissão para criar repositórios (403); criação feita pelo caminho assistido "Use this template" pelo consultor em 2026-09-02. Não bloqueia mais; registrado para o init-check.
-- Pasta local com `01_Base_Operacional_Sintetica.xlsx` ainda não conectada ao Claude. Bloqueia a leitura da base no init-data (Etapa 3). Ação: consultor conectar a pasta no app desktop ("Adicionar pasta").
+- ~~Pasta local não conectada~~ — resolvido em 2026-09-02: pasta "teste 2" conectada; base lida e catalogada.
 
 ## Achados de ambiente
 
@@ -67,8 +69,9 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Teste de proteção: push direto na main rejeitado com 409 ("Changes must be made through a pull request" + check `checks` obrigatório).
 - Leitura de check runs via conector: funcionou nesta sessão (PR #1: check `checks` = failure, merge bloqueado, PR fechado sem merge).
 - Com a main protegida, atualizações de estado passam por PR + check verde + merge pelo agente.
+- Commit de binário (.xlsx) via conector não é suportado — fixture versionada como CSVs (1:1 por aba); o Excel original permanece na pasta conectada como fonte oficial.
 
 ## Retomada
 
-- Próximo passo: init-data (Etapa 3 de 5 — catálogo de dados). Requer a pasta local com `01_Base_Operacional_Sintetica.xlsx` conectada.
-- Depois: init-plugin, init-check.
+- Próximo passo: init-plugin (Etapa 4 de 5 — montagem do plugin do projeto).
+- Depois: init-check.
