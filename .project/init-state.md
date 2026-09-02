@@ -3,7 +3,7 @@ init_version: 0.1.0
 projeto: "Aucta Foods — Rentabilidade por Cliente e Cobertura Comercial"
 repo: "AuctaFerrari/aucta-init-test2"
 risk_tier: 2
-status_geral: em_andamento
+status_geral: concluida
 iniciado_em: 2026-09-02
 atualizado_em: 2026-09-02
 ---
@@ -20,7 +20,7 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | init-repo | concluida | 2026-09-02 | CODEOWNERS/checks/CLAUDE.md (commit b5d59eb); proteção da main validada por push rejeitado (409); check reprovou PR #1 de teste (fechado sem merge) |
 | init-data | concluida | 2026-09-02 | .project/DATA_CATALOG.md + tests/fixtures/*.csv (5 abas, extraídas da base sintética); leitura N1 = 100% das linhas |
 | init-plugin | concluida | 2026-09-02 | project-plugin/ (router + 7 workflows + pointers + client-rules + MANIFEST D3); CLAUDE.md Router preenchido; stack e fluxos confirmados pelo consultor |
-| init-check | pendente | | |
+| init-check | concluida | 2026-09-02 | Preflight P1–P11 sem falha bloqueante; harness local verde (4 guardas); drift check 5/5 sem divergência (core = manifest = upstream HEAD); dry run /start-work em simulação ok; DoR: PRONTO |
 
 ## init-interview — blocos
 
@@ -59,8 +59,16 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 
 ## Blockers
 
-- Conector GitHub sem permissão para criar repositórios (403); criação feita pelo caminho assistido "Use this template" pelo consultor em 2026-09-02. Não bloqueia mais; registrado para o init-check.
-- ~~Pasta local não conectada~~ — resolvido em 2026-09-02: pasta "teste 2" conectada; base lida e catalogada.
+- _(nenhum bloqueante)_ Histórico: conector GitHub sem permissão de criar repos (403 — resolvido via "Use this template"); pasta local não conectada (resolvido em 2026-09-02).
+
+## Itens manuais/administrativos pendentes (7.2 passo 12)
+
+- Validar `limiar_margem_servir_baixa` com Ana Martins (antes do primeiro relatório).
+- Nomear o analista operador e completar contatos de Ana e Bruno em OWNERS.md.
+- Criar `tests/golden/` com o primeiro golden case (consultor prepara, Bruno valida) — obrigatório ANTES do primeiro código de cálculo (o harness passa a exigir quando `src/` existir).
+- Criar pasta `backups/` no OneDrive do projeto (usada a partir do primeiro /release).
+- Opcional: GitHub Project (quadro) quando o time quiser backlog visual.
+- Projeto real equivalente: repo privado + plano Team+ (aqui público por ser massa sintética).
 
 ## Achados de ambiente
 
@@ -68,10 +76,11 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Labels de governança: bootstrap automático pela Action do template funcionou (9 labels).
 - Ruleset da main: precisou remover admin da bypass list; enforcement em repo privado indisponível no plano Free → repo público.
 - Teste de proteção: push direto na main rejeitado com 409 ("Changes must be made through a pull request" + check `checks` obrigatório).
-- Leitura de check runs via conector: funcionou nesta sessão (PR #1: check `checks` = failure, merge bloqueado, PR fechado sem merge).
+- Leitura de check runs via conector: funcionou nesta sessão (PR #1: check `checks` = failure, merge bloqueado, PR fechado sem merge; PRs #2–#5 verdes e mesclados pelo agente).
 - Com a main protegida, atualizações de estado passam por PR + check verde + merge pelo agente.
 - Commit de binário (.xlsx) via conector não é suportado — fixture versionada como CSVs (1:1 por aba); o Excel original permanece na pasta conectada como fonte oficial.
+- Drift check D3 (2026-09-02): 5 skills conferidas — blob do core = manifest = upstream HEAD; sem divergência. Repo público permitiu clone e execução local do harness (verde).
 
 ## Retomada
 
-- Próximo passo: init-check (Etapa 5 de 5 — conferência final e relatório Definition of Ready).
+- Iniciação CONCLUÍDA (DoR: pronto para desenvolvimento). Próximo passo: primeiro ciclo de trabalho via router do project-plugin — /start-work em "Leitura e tratamento da base operacional", desviando para /change-number (regras de tratamento são Muda-numero).
