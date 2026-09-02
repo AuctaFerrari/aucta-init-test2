@@ -17,8 +17,8 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | Sub-skill | Status | Última atualização | Evidência |
 | --- | --- | --- | --- |
 | init-interview | concluida | 2026-09-02 | PROJECT.md, TRUTHS.md, GLOSSARY.md, ACCEPTANCE.md, OWNERS.md (commit 85e49e8) |
-| init-repo | pendente | | |
-| init-data | pendente | | |
+| init-repo | concluida | 2026-09-02 | CODEOWNERS/checks/CLAUDE.md (commit b5d59eb); proteção da main validada por push rejeitado (409); check reprovou PR #1 de teste (fechado sem merge) |
+| init-data | pendente | | bloqueada por pasta local não conectada |
 | init-plugin | pendente | | |
 | init-check | pendente | | |
 
@@ -35,12 +35,12 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | G. IP e licenças | concluida | fechado por premissa (ver Premissas) |
 | H. Arquitetura inicial | concluida | PROJECT.md (programa local Python, Windows) |
 | I. Ambientes e acessos | concluida | GitHub ok; pasta local pendente (ver Blockers) |
-| J. Repositório e governança | pendente | executado no init-repo |
+| J. Repositório e governança | concluida | init-repo: itens 1–10 fechados (item 3 baseline n/a — sem código pré-existente; item 7 quadro adiado) |
 | K. Estratégia de testes | concluida | ACCEPTANCE.md (golden cases tier 2) |
 | L. Conhecimento canônico | concluida | TRUTHS.md (10 verdades), GLOSSARY.md (10 termos) |
 | M. Plugin e skill stack | pendente | executado no init-plugin |
 | N. Release e sustentação | concluida | analista opera, Aucta dá suporte; aceite por e-mail |
-| O. Baseline | concluida | não há código pré-existente; baseline = repo novo do template (tag no init-repo) |
+| O. Baseline | concluida | não há código pré-existente; baseline = estado do template (sem tag necessária) |
 
 ## Premissas
 
@@ -50,13 +50,25 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Contatos de Ana Martins e Bruno Lima "a confirmar" em OWNERS.md.
 - Marcos/datas de desenvolvimento não definidos na iniciação; serão definidos no planejamento.
 - Backup de releases fora do GitHub (padrão: pasta backups/ no SharePoint) não configurado — projeto não usa SharePoint na v1.
+- Repo tornado PÚBLICO em 2026-09-02, por decisão do consultor, para a proteção da main valer no plano Free — aceitável apenas porque a massa é 100% sintética. Projeto real: repo privado + plano Team+ (padrão Aucta).
+- Proteção da main sem "Required approvals" (consultor solo — GitHub proíbe auto-aprovação); validação de negócio Muda-numero registrada como comentário no PR.
+- GitHub Project (quadro de backlog) adiado a pedido do consultor — item não-bloqueante.
 
 ## Blockers
 
 - Conector GitHub sem permissão para criar repositórios (403); criação feita pelo caminho assistido "Use this template" pelo consultor em 2026-09-02. Não bloqueia mais; registrado para o init-check.
 - Pasta local com `01_Base_Operacional_Sintetica.xlsx` ainda não conectada ao Claude. Bloqueia a leitura da base no init-data (Etapa 3). Ação: consultor conectar a pasta no app desktop ("Adicionar pasta").
 
+## Achados de ambiente
+
+- create_repository via conector: 403 (ASSISTED "Use this template" funcionou).
+- Labels de governança: bootstrap automático pela Action do template funcionou (9 labels).
+- Ruleset da main: precisou remover admin da bypass list; enforcement em repo privado indisponível no plano Free → repo público.
+- Teste de proteção: push direto na main rejeitado com 409 ("Changes must be made through a pull request" + check `checks` obrigatório).
+- Leitura de check runs via conector: funcionou nesta sessão (PR #1: check `checks` = failure, merge bloqueado, PR fechado sem merge).
+- Com a main protegida, atualizações de estado passam por PR + check verde + merge pelo agente.
+
 ## Retomada
 
-- Próximo passo: iniciar init-repo (Etapa 2 de 5 — organização do repositório).
-- Depois: init-data (requer pasta local conectada), init-plugin, init-check.
+- Próximo passo: init-data (Etapa 3 de 5 — catálogo de dados). Requer a pasta local com `01_Base_Operacional_Sintetica.xlsx` conectada.
+- Depois: init-plugin, init-check.
