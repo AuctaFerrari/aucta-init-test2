@@ -1,0 +1,4 @@
+parametro,valor,unidade,fonte,status
+custo_por_visita_realizada,100,BRL/visita,Premissa do sponsor para piloto,Provisório
+custo_operacional_por_pedido,20,BRL/pedido,Controladoria - regra vigente,Vigente
+limiar_margem_servir_baixa,0.05,% receita líquida,A validar com sponsor,Não validado
