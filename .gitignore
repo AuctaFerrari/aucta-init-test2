@@ -1,0 +1,9 @@
+# Dados reais nunca entram no Git (TRUTH padrão Aucta)
+inputs/
+outputs/
+
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+node_modules/

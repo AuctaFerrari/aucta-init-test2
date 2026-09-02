@@ -1,0 +1,40 @@
+name: Bootstrap labels
+
+# Cria as 9 labels de governança Aucta no primeiro push (idempotente:
+# labels já existentes são ignoradas). Pode também ser rodado manualmente.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              ['risco-0',     'c2e0c6', 'Editorial: branch, inspeção, review e PR'],
+              ['risco-1',     'fef2c0', 'Funcional: issue, aceite, testes do fluxo, QA e review'],
+              ['risco-2',     'f9d0c4', 'Resultado: spec, Muda-numero, before/after, regressão, aprovação'],
+              ['risco-3',     'e99695', 'Estrutural: plano técnico, ADR, threat model, segundo revisor, rollback'],
+              ['muda-numero', 'd93f0b', 'Altera número/indicador/classificação entregue ao cliente'],
+              ['bug',         'd73a4a', 'Comportamento incorreto ou regressão'],
+              ['feature',     'a2eeef', 'Nova funcionalidade'],
+              ['security',    'b60205', 'Segurança, acesso, dados sensíveis'],
+              ['release',     '0e8a16', 'Versão entregue / preparo de release'],
+            ];
+            for (const [name, color, description] of labels) {
+              try {
+                await github.rest.issues.createLabel({ ...context.repo, name, color, description });
+                core.info(`criada: ${name}`);
+              } catch (e) {
+                if (e.status === 422) { core.info(`já existe: ${name}`); }
+                else { throw e; }
+              }
+            }

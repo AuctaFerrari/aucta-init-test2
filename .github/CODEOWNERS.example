@@ -1,0 +1,7 @@
+# CODEOWNERS — gerado pelo init-repo a partir de OWNERS.md
+# Owner técnico revisa tudo por padrão; refine por pasta quando houver mais revisores.
+
+* @<owner-tecnico>
+
+# Artefatos canônicos exigem o owner funcional/técnico:
+# PROJECT.md TRUTHS.md GLOSSARY.md ACCEPTANCE.md OWNERS.md @<owner-tecnico>
