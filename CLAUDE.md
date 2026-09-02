@@ -1,6 +1,6 @@
-# CLAUDE.md — <NOME_DO_PROJETO>
+# CLAUDE.md — Aucta Foods — Rentabilidade por Cliente e Cobertura Comercial
 
-Padrão Aucta (repo criado do template; o /init preenche os placeholders). Minimal context for ANY agent session opened in this repo — read before acting.
+Padrão Aucta (gerado pelo /init). Minimal context for ANY agent session opened in this repo — read before acting.
 
 ## Read first (in order)
 
@@ -11,18 +11,18 @@ Padrão Aucta (repo criado do template; o /init preenche os placeholders). Minim
 
 ## Non-negotiable rules
 
-- **REGRA DE OURO:** the agent only uses/alters files inside the project's connected folder and this repository. <ajustar conforme restrições do PROJECT.md>
-- Real client data NEVER enters Git (fixtures sintéticas apenas; ver DATA_CATALOG).
+- **REGRA DE OURO:** the agent only uses/alters files inside the project's connected folder and this repository. As bases mensais originais da Aucta Foods são INTOCÁVEIS — a solução lê a base e escreve saídas em pasta própria, nunca altera o arquivo de origem.
+- Real client data NEVER enters Git (fixtures sintéticas apenas, somente em `tests/fixtures/`; ver TRUTH-006 e DATA_CATALOG).
 - The agent executes ALL Git (branch/commit/push/PR/merge) — the consultant never types commands (D6).
-- Business approval before merging any Muda-numero change: quem valida número está em OWNERS.md.
+- Business approval before merging any Muda-numero change: quem valida número é Bruno Lima (Controladoria) — ver OWNERS.md.
 - Consultant dialogue in pt-BR per linguagem-consultor (conceitos traduzidos, abertura didática, progresso "Etapa N de X", 1 decisão por pergunta).
 
 ## Project facts
 
-- Risk tier: <tier + justificativa de uma linha>
-- Ambiente/infra: <onde a solução roda, incl. ambiente do cliente>
-- Backup: snapshot do repo em `backups/` na pasta do projeto no SharePoint a cada release (independência do GitHub).
+- Risk tier: 2 — a solução produz números (margens por cliente) que sustentam decisão da diretoria; golden cases obrigatórios.
+- Ambiente/infra: programa local em Python executado manualmente pelo analista em computador corporativo Windows; entrada = Excel operacional mensal (5 bases), saída = Excel analítico + PDF executivo em pasta local; sem servidor, sem rede, sem autenticação na v1.
+- Backup: projeto não usa SharePoint na v1 — snapshot de release a definir (registrado como premissa no init-state).
 
 ## Router
 
-<preenchido pelo init-plugin quando project-plugin/ existir>
+<preenchido/atualizado pelo init-plugin quando project-plugin/ existir: como invocar /start-work, /build-feature, /change-number, /pre-pr, /release, /handoff>

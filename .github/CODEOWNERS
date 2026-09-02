@@ -1,0 +1,11 @@
+# CODEOWNERS — gerado pelo init-repo a partir de OWNERS.md
+# Owner técnico revisa tudo por padrão; refine por pasta quando houver mais revisores.
+
+* @AuctaFerrari
+
+# Artefatos canônicos exigem o owner técnico:
+PROJECT.md @AuctaFerrari
+TRUTHS.md @AuctaFerrari
+GLOSSARY.md @AuctaFerrari
+ACCEPTANCE.md @AuctaFerrari
+OWNERS.md @AuctaFerrari
