@@ -1,1 +1,0 @@
-Este arquivo não deveria existir: a proteção da main deve rejeitar push direto.
