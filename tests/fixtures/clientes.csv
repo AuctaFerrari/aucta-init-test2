@@ -1,0 +1,7 @@
+cliente_id,razao_social,regiao,segmento,canal,status
+C001,Alpha Alimentos Ltda.,Nordeste,Food Service,Direto,Ativo
+C002,Beta Padarias S.A.,Sudeste,Food Service,Direto,Ativo
+C003,Gama Restaurantes Ltda.,Sudeste,Food Service,Direto,Ativo
+C004,Delta Distribuidora Ltda.,Centro-Oeste,Distribuidor,Distribuidor,Ativo
+C005,Épsilon Hotéis Ltda.,Nordeste,Hotelaria,Direto,Ativo
+C006,Zeta Refeições Ltda.,Sul,Food Service,Direto,Inativo
