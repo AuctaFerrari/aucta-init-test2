@@ -21,8 +21,20 @@ Padrão Aucta (gerado pelo /init). Minimal context for ANY agent session opened 
 
 - Risk tier: 2 — a solução produz números (margens por cliente) que sustentam decisão da diretoria; golden cases obrigatórios.
 - Ambiente/infra: programa local em Python executado manualmente pelo analista em computador corporativo Windows; entrada = Excel operacional mensal (5 bases), saída = Excel analítico + PDF executivo em pasta local; sem servidor, sem rede, sem autenticação na v1.
-- Backup: projeto não usa SharePoint na v1 — snapshot de release a definir (registrado como premissa no init-state).
+- Backup: projeto não usa SharePoint na v1 — snapshot ZIP por release em `backups/<tag>.zip` na pasta do projeto no OneDrive do consultor (ver project-plugin/skills/release).
 
 ## Router
 
-<preenchido/atualizado pelo init-plugin quando project-plugin/ existir: como invocar /start-work, /build-feature, /change-number, /pre-pr, /release, /handoff>
+O control plane vive em `project-plugin/skills/router/SKILL.md` — toda demanda de trabalho entra por ele. Fluxos disponíveis (em `project-plugin/skills/<nome>/SKILL.md`):
+
+| Invocação | Quando |
+| --- | --- |
+| /start-work | Abrir qualquer mudança (sempre primeiro): Issue + branch + plano de validação |
+| /build-feature | Funcionalidade tier 1+: spec → Plano Visual Faseado aprovado → TDD |
+| /fix-bug | Erro reproduzível: sintoma → regressão que falha → causa-raiz |
+| /change-number | OBRIGATÓRIO para fórmula/parâmetro/regra/indicador: fonte → golden before/after → aprovação do Bruno no PR |
+| /pre-pr | Antes de abrir/atualizar QUALQUER PR: testes, QA, D4 (3 camadas), D5 (TRUTHS) |
+| /release | Versão entregue: validação → notes com Muda-numero quantificado → tag → e-mail de aceite → backup |
+| /handoff | Troca de sessão/pessoa: resumo publicado na Issue/PR |
+
+Regras inegociáveis do cliente: `project-plugin/references/client-rules.md` · Ponteiros: `project-plugin/references/pointers.md` · Skills de terceiros: `project-plugin/vendored/MANIFEST.md` (apontam para o core auditado).

@@ -19,7 +19,7 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | init-interview | concluida | 2026-09-02 | PROJECT.md, TRUTHS.md, GLOSSARY.md, ACCEPTANCE.md, OWNERS.md (commit 85e49e8) |
 | init-repo | concluida | 2026-09-02 | CODEOWNERS/checks/CLAUDE.md (commit b5d59eb); proteção da main validada por push rejeitado (409); check reprovou PR #1 de teste (fechado sem merge) |
 | init-data | concluida | 2026-09-02 | .project/DATA_CATALOG.md + tests/fixtures/*.csv (5 abas, extraídas da base sintética); leitura N1 = 100% das linhas |
-| init-plugin | pendente | | |
+| init-plugin | concluida | 2026-09-02 | project-plugin/ (router + 7 workflows + pointers + client-rules + MANIFEST D3); CLAUDE.md Router preenchido; stack e fluxos confirmados pelo consultor |
 | init-check | pendente | | |
 
 ## init-interview — blocos
@@ -38,8 +38,8 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | J. Repositório e governança | concluida | init-repo: itens 1–10 fechados (item 3 baseline n/a — sem código pré-existente; item 7 quadro adiado) |
 | K. Estratégia de testes | concluida | ACCEPTANCE.md (golden cases tier 2) |
 | L. Conhecimento canônico | concluida | TRUTHS.md (10 verdades), GLOSSARY.md (10 termos) |
-| M. Plugin e skill stack | pendente | executado no init-plugin |
-| N. Release e sustentação | concluida | analista opera, Aucta dá suporte; aceite por e-mail |
+| M. Plugin e skill stack | concluida | init-plugin: 6 skills + camada karpathy (pendente vendorização, fallback embutido); 7 workflows parametrizados |
+| N. Release e sustentação | concluida | analista opera, Aucta dá suporte; aceite por e-mail; backup por release em backups/ no OneDrive |
 | O. Baseline | concluida | não há código pré-existente; baseline = estado do template (sem tag necessária) |
 
 ## Premissas
@@ -49,12 +49,13 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Nome do analista operador da rotina ainda não informado (OWNERS.md: "a nomear").
 - Contatos de Ana Martins e Bruno Lima "a confirmar" em OWNERS.md.
 - Marcos/datas de desenvolvimento não definidos na iniciação; serão definidos no planejamento.
-- Backup de releases fora do GitHub (padrão: pasta backups/ no SharePoint) não configurado — projeto não usa SharePoint na v1.
+- Backup de releases fora do GitHub: sem SharePoint na v1 → snapshot ZIP por release em `backups/` na pasta do projeto no OneDrive do consultor (parametrizado no /release).
 - Repo tornado PÚBLICO em 2026-09-02, por decisão do consultor, para a proteção da main valer no plano Free — aceitável apenas porque a massa é 100% sintética. Projeto real: repo privado + plano Team+ (padrão Aucta).
 - Proteção da main sem "Required approvals" (consultor solo — GitHub proíbe auto-aprovação); validação de negócio Muda-numero registrada como comentário no PR.
 - GitHub Project (quadro de backlog) adiado a pedido do consultor — item não-bloqueante.
 - Estrutura da base de PRODUÇÃO presumida idêntica à base sintética do piloto — não validado (DATA_CATALOG).
 - Parâmetro `limiar_margem_servir_baixa` (0,05) marcado "Não validado" na própria base — validar com o sponsor antes do primeiro relatório.
+- Skill andrej-karpathy-skills pendente de vendorização no core (tranche 4); workflows operam com fallback embutido até lá.
 
 ## Blockers
 
@@ -73,5 +74,4 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 
 ## Retomada
 
-- Próximo passo: init-plugin (Etapa 4 de 5 — montagem do plugin do projeto).
-- Depois: init-check.
+- Próximo passo: init-check (Etapa 5 de 5 — conferência final e relatório Definition of Ready).
