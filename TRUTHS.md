@@ -51,3 +51,28 @@ TRUTH-010 │ A execução é mensal, manual, por analista, em computador corpor
 Source: pedido inicial do consultor (2026-09-02)
 Owner: Aucta Foods (analista da rotina)
 Last reviewed: 2026-09-02
+
+TRUTH-011 │ Pedido duplicado: vale a versão com `atualizado_em` mais recente (ex.: O006 entra com custo_produto 260); a versão descartada é registrada no log de tratamento.
+Source: golden cases e regras fornecidos pelo consultor na revisão da iniciação (2026-09-03), conferidos por recomputação manual independente
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-03
+
+TRUTH-012 │ Pedidos com status Cancelado são excluídos dos cálculos, com exclusão documentada na reconciliação.
+Source: golden cases e regras fornecidos pelo consultor na revisão da iniciação (2026-09-03)
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-03
+
+TRUTH-013 │ Pedido com campo essencial nulo (custo do produto, frete) ou com cliente inexistente no cadastro bloqueia a publicação do relatório até ser tratado (EX-04..06 em tests/fixtures/expected_exceptions.csv).
+Source: regras fornecidas pelo consultor na revisão da iniciação (2026-09-03)
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-03
+
+TRUTH-014 │ Visita com status "Realizada" sem data_realizada é classificada como exceção reportada e não conta como visita válida (ex.: V008).
+Source: regras fornecidas pelo consultor na revisão da iniciação (2026-09-03)
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-03
+
+TRUTH-015 │ Identificadores de cliente são normalizados (maiúsculas, sem espaços) antes do cruzamento (ex.: " c003 " → C003), com normalização registrada no log.
+Source: golden cases fornecidos pelo consultor na revisão da iniciação (2026-09-03)
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-03
