@@ -1,0 +1,8 @@
+caso,entidade,id,problema,tratamento_esperado,efeito
+EX-01,pedido,O006,duplicado em Vendas (duas versões),manter a versão com atualizado_em mais recente (custo_produto 260) e registrar no log de tratamento,entra no cálculo com custo 260
+EX-02,pedido,O005,status Cancelado,excluir dos cálculos e documentar a exclusão,fora de receita e custos; aparece na reconciliação
+EX-03,pedido,O004,cliente_id sujo " c003 ",normalizar para C003 e registrar no log,entra no cálculo como C003
+EX-04,pedido,O010,cliente C999 inexistente no cadastro,exceção órfão — relatório NÃO é publicado enquanto não tratada,bloqueia publicação
+EX-05,pedido,O008,frete nulo em Custos_Logisticos,exceção de completude — relatório NÃO é publicado enquanto não tratada,bloqueia publicação
+EX-06,pedido,O009,custo_produto nulo,exceção de completude — relatório NÃO é publicado enquanto não tratada,bloqueia publicação
+EX-07,visita,V008,status Realizada sem data_realizada,classificar como exceção reportada — não conta como visita válida,fora do custo de visitas; listada no relatório de exceções

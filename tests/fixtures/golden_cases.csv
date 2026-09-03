@@ -1,0 +1,4 @@
+caso,cliente_id,mes_ref,receita_liquida,custo_produto,custo_logistico,margem_contribuicao,custo_visitas,custo_pedidos,margem_servir,referencia
+GC-01,C001,2026-01,1500,800,130,570,200,40,330,"Fornecido pelo consultor no briefing; conferido por recomputação manual independente em 2026-09-03; validação formal: Bruno Lima (pendente)"
+GC-02,C002,2026-01,760,450,70,240,100,20,120,"Fornecido pelo consultor no briefing; conferido por recomputação manual independente em 2026-09-03; validação formal: Bruno Lima (pendente)"
+GC-03,C003,2026-01,1530,860,130,540,100,40,400,"Fornecido pelo consultor no briefing; conferido por recomputação manual independente em 2026-09-03; inclui O006 deduplicado (custo 260) e O004 normalizado (' c003 ' → C003); validação formal: Bruno Lima (pendente)"
