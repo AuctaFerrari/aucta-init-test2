@@ -12,12 +12,13 @@
 
 | # | Critério (testável) | Como provar |
 | --- | --- | --- |
-| ACC-001 | Excel analítico com receita líquida, margem de contribuição e margem de servir por cliente e mês do piloto (jan–mar/2026). | Execução sobre a base sintética + conferência de amostra contra o golden case. |
+| ACC-001 | Excel analítico com receita líquida, margem de contribuição e margem de servir por cliente e mês do piloto (jan–mar/2026). | Execução sobre a base sintética + golden cases GC-01..03 (`tests/fixtures/golden_cases.csv`). |
 | ACC-002 | PDF executivo com aderência de visitas ao planejamento e as duas listas de clientes-alerta. | Inspeção do PDF gerado no piloto; listas conferidas contra o golden case. |
-| ACC-003 | Números do piloto batem com a conferência manual da controladoria. | Golden case validado por Bruno Lima; diferença zero na amostra. |
+| ACC-003 | Números do piloto batem com a referência externa validada pela controladoria. | Golden cases GC-01..03 com tolerância R$ 0,00; validação formal de Bruno Lima. |
 | ACC-004 | Analista executa sozinho no Windows, de ponta a ponta, sem apoio do consultor. | Teste assistido de execução: analista roda a rotina completa apenas com o guia de uso. |
-| ACC-005 | Duplicidades e identificadores tratados com registro do que foi corrigido/excluído. | Log de tratamento gerado em cada execução, conferido na entrega. |
+| ACC-005 | Duplicidades e identificadores tratados com registro do que foi corrigido/excluído. | Log de tratamento cobre TODAS as linhas de `tests/fixtures/expected_exceptions.csv` (EX-01..07). |
 | ACC-006 | Reconciliação: diferença zero entre totais válidos da origem e totais processados, após exclusões documentadas. | Bloco de reconciliação no Excel analítico, conferido em cada execução do piloto. |
+| ACC-007 | Relatório NÃO é publicado enquanto houver exceção bloqueante aberta (órfão, custo/frete nulo — EX-04..06). | Execução sobre a fixture: pipeline sinaliza bloqueio de publicação com O008/O009/O010 presentes. |
 
 ## Definição de pronto
 
@@ -34,10 +35,11 @@
 
 ## Como vamos provar (estratégia de testes — bloco K)
 
-**Risk tier do projeto:** 2
+**Risk tier do projeto:** 2 · **Detalhe completo:** `tests/TEST_STRATEGY.md`
 
 | Tipo | Aplicação neste projeto |
 | --- | --- |
+| Golden cases | **Materializados** em `tests/fixtures/golden_cases.csv` (GC-01..03, fornecidos no briefing, conferidos por recomputação manual independente em 2026-09-03; tolerância R$ 0,00). Validação formal de Bruno Lima = gate antes do merge do primeiro /change-number. Rodam before/after em toda mudança de número; harness independente em `tests/golden/run_golden.py` (entra com o primeiro código; CI já exige). |
+| Exceções esperadas | `tests/fixtures/expected_exceptions.csv` (EX-01..07): dedupe, exclusão, normalização, bloqueios de publicação. |
 | Smoke / E2E | Execução completa da rotina sobre a base sintética (jan–mar/2026), do Excel de entrada até Excel analítico + PDF. |
-| Golden cases | Obrigatórios antes de grandes mudanças: amostra de clientes do piloto com resultado esperado calculado fora do sistema pelo consultor e validado por Bruno Lima (Controladoria). Entrada, resultado esperado, critério de igualdade e referência externa registrados no repositório. |
-| Testes de dados | Duplicidades e identificadores: casos com registros duplicados/órfãos devem produzir o log de tratamento esperado. Reconciliação (ACC-006) verificada em toda execução. |
+| Testes de dados | Duplicidades e identificadores produzem o log esperado; reconciliação (ACC-006) verificada em toda execução. |
