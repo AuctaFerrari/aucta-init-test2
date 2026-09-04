@@ -26,10 +26,10 @@ python src\diagnostico_fonte.py --entrada C:\Aucta\inputs\01_Base_Operacional.xl
 
 - **Esquema descoberto** — colunas encontradas em cada base, tipo de cada campo, quantos registros e quantos vazios.
 - **Relacionamentos** — quantos registros de uma base não encontram par na outra (pedido sem cliente cadastrado, por exemplo).
-- **Achados** — cada linha tem um código (`D-001`...), a gravidade, a evidência (linha e identificador) e a **decisão pendente do negócio**.
+- **Achados que exigem atenção** (`D-001`...) — anomalias e avisos, cada um com gravidade, evidência (linha e identificador) e a **decisão pendente do negócio**. É esta a contagem de problemas.
   - `anomalia` — algo que contradiz a estrutura esperada ou impede um cruzamento confiável.
   - `aviso` — algo que merece confirmação antes de virar número.
-  - `informativo` — retrato, sem juízo (inventário de status, competências presentes).
+- **Perfil e inventário da fonte** (`P-001`...) — retrato sem juízo: inventário de status com os ids de cada valor, competências presentes, colunas com vazios possivelmente legítimos. **Não são problemas** e não entram na contagem de achados.
 - **Status de evidência** — `observado` (lido diretamente na base) ou `hipótese` (o diagnóstico sugere uma explicação, sem aplicá-la).
 
 ## O que fazer com os achados
@@ -38,7 +38,13 @@ Os achados **não são regras**. Cada decisão de tratamento (qual versão de um
 
 ## Dependências
 
-Python 3.9+. Para ler `.xlsx` é necessário o pacote `openpyxl` (`pip install openpyxl`); a leitura de CSVs usa apenas a biblioteca padrão.
+Python 3.9+. A leitura de `.xlsx` usa `openpyxl`, declarado em `requirements.txt` com versão fixa e hash verificado. Instalação reproduzível:
+
+```
+python -m pip install --require-hashes -r requirements.txt
+```
+
+A leitura de uma pasta de CSVs usa apenas a biblioteca padrão e não depende desse pacote.
 
 ## Auditoria
 
