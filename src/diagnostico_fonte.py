@@ -12,12 +12,19 @@ posterior, com regra aprovada pelo negocio):
   - nao promove anomalia observada a regra aprovada — apenas registra e aponta
     a decisao pendente.
 
+A saida separa o que exige atencao (anomalia/aviso, codigos D-###) do perfil e
+inventario da fonte (informativo, codigos P-###), com contadores independentes:
+inventario de status nao infla a contagem de problemas.
+
 Saidas deterministicas: mesmas entradas produzem bytes identicos (nao ha
 carimbo de tempo no conteudo; a auditoria se faz pelo SHA-256 das entradas).
 
 Uso:
     python src/diagnostico_fonte.py --entrada <arquivo.xlsx|pasta-csv> \
         [--saida outputs/diagnostico] [--rotulo 2026-01] [--periodo 2026-01:2026-03]
+
+A leitura de .xlsx exige openpyxl, declarado em requirements.txt com versao
+fixa e hash verificado. A leitura de CSVs usa apenas a biblioteca padrao.
 """
 
 from __future__ import annotations
@@ -148,8 +155,9 @@ def ler_xlsx(caminho: Path) -> tuple[dict, dict, list]:
         from openpyxl import load_workbook
     except ImportError:  # pragma: no cover - ambiente sem openpyxl
         raise SystemExit(
-            "ERRO: leitura de .xlsx exige a biblioteca openpyxl. "
-            "Instale (pip install openpyxl) ou aponte --entrada para a pasta com as CSVs."
+            "ERRO: leitura de .xlsx exige a biblioteca openpyxl. Instale com "
+            "'python -m pip install --require-hashes -r requirements.txt' ou aponte "
+            "--entrada para a pasta com as CSVs."
         )
     livro = load_workbook(filename=caminho, read_only=True, data_only=True)
     tabelas, achados = {}, []
@@ -376,7 +384,8 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
             distribuicoes[coluna] = dict(sorted(contagem.items()))
 
     # inventario de status: cada valor observado e uma decisao de tratamento
-    # pendente. O diagnostico NAO decide o que entra ou sai do calculo.
+    # pendente. O diagnostico NAO decide o que entra ou sai do calculo. Sai
+    # como informativo (perfil da fonte), nunca como problema.
     if nome != "parametros":
         for coluna in [c for c in contrato["categoricas"] if c == "status" or c.startswith("status")]:
             if coluna not in colunas:
@@ -565,8 +574,8 @@ def analisar_periodo(tabelas: dict, periodo: str | None) -> list:
 ORDEM_SEVERIDADE = {"anomalia": 0, "aviso": 1, "informativo": 2}
 
 
-def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo):
-    resumos, achados = {}, []
+def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo, achados_iniciais=()):
+    resumos, achados = {}, list(achados_iniciais)
     for nome in sorted(tabelas):
         resumo, achados_tabela = analisar_tabela(nome, tabelas[nome])
         resumo["fonte"] = fontes.get(nome, {})
@@ -577,12 +586,21 @@ def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo):
     achados.extend(analisar_contradicoes(tabelas))
     achados.extend(analisar_periodo(tabelas, periodo))
 
-    achados.sort(key=lambda a: (ORDEM_SEVERIDADE[a["severidade"]], a["classe"], a["entidade"], str(a["id"])))
-    for i, achado in enumerate(achados, start=1):
+    def ordenar(itens):
+        return sorted(itens, key=lambda a: (ORDEM_SEVERIDADE[a["severidade"]], a["classe"],
+                                            a["entidade"], str(a["id"])))
+
+    # Duas listas separadas: o que exige atencao (anomalia/aviso) e o perfil da
+    # fonte (informativo). O inventario nao infla a contagem de problemas.
+    atencao = ordenar([a for a in achados if a["severidade"] in ("anomalia", "aviso")])
+    perfil_fonte = ordenar([a for a in achados if a["severidade"] == "informativo"])
+    for i, achado in enumerate(atencao, start=1):
         achado["codigo"] = f"D-{i:03d}"
+    for i, achado in enumerate(perfil_fonte, start=1):
+        achado["codigo"] = f"P-{i:03d}"
 
     por_classe, por_severidade = {}, {}
-    for a in achados:
+    for a in atencao:
         por_classe[a["classe"]] = por_classe.get(a["classe"], 0) + 1
         por_severidade[a["severidade"]] = por_severidade.get(a["severidade"], 0) + 1
 
@@ -593,14 +611,16 @@ def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo):
         "entrada": {"nome": Path(entrada).name, "tipo": tipo_entrada, "periodo_informado": periodo},
         "tabelas": resumos,
         "relacionamentos": relacionamentos,
-        "achados": achados,
+        "achados": atencao,
+        "perfil_fonte": perfil_fonte,
         "resumo": {
             "tabelas_lidas": len(resumos),
             "registros_lidos": {n: r["registros"] for n, r in resumos.items()},
-            "achados_total": len(achados),
+            "achados_total": len(atencao),
             "achados_por_classe": dict(sorted(por_classe.items())),
             "achados_por_severidade": dict(sorted(por_severidade.items(), key=lambda kv: ORDEM_SEVERIDADE[kv[0]])),
-            "decisoes_pendentes": sorted({a["decisao_pendente"] for a in achados if a["decisao_pendente"] != "-"}),
+            "itens_perfil_fonte": len(perfil_fonte),
+            "decisoes_pendentes": sorted({a["decisao_pendente"] for a in atencao if a["decisao_pendente"] != "-"}),
         },
     }
 
@@ -631,9 +651,10 @@ def render_markdown(payload: dict) -> str:
         "## Resumo",
         "",
         f"- Tabelas lidas: **{resumo['tabelas_lidas']}**",
-        f"- Achados: **{resumo['achados_total']}** — "
-        + ", ".join(f"{k}: {v}" for k, v in resumo["achados_por_severidade"].items()),
-        f"- Por classe: " + ", ".join(f"{k}: {v}" for k, v in resumo["achados_por_classe"].items()),
+        f"- Achados que exigem atenção: **{resumo['achados_total']}** — "
+        + (", ".join(f"{k}: {v}" for k, v in resumo["achados_por_severidade"].items()) or "nenhum"),
+        f"- Por classe: " + (", ".join(f"{k}: {v}" for k, v in resumo["achados_por_classe"].items()) or "—"),
+        f"- Itens de perfil/inventário da fonte (sem juízo, não são problemas): **{resumo['itens_perfil_fonte']}**",
         "",
         "## Esquema descoberto",
         "",
@@ -660,16 +681,40 @@ def render_markdown(payload: dict) -> str:
     for rel in payload["relacionamentos"]:
         linhas.append(f"| `{rel['relacao']}` | {rel['forca']} | {rel['registros_origem']} | {rel['sem_correspondencia']} |")
 
-    linhas += ["", "## Achados", "", "| Codigo | Sev. | Classe | Entidade | ID | Descricao | Evidencia | Decisao pendente |",
+    linhas += ["", "## Achados que exigem atenção", "",
+               "Anomalias e avisos: algo contradiz a estrutura esperada, impede um cruzamento confiável "
+               "ou precisa de confirmação antes de virar número. Nenhum deles e regra aprovada.",
+               "",
+               "| Codigo | Sev. | Classe | Entidade | ID | Descricao | Evidencia | Decisao pendente |",
                "| --- | --- | --- | --- | --- | --- | --- | --- |"]
-    for a in payload["achados"]:
-        linhas.append(
-            f"| {a['codigo']} | {a['severidade']} | {a['classe']} | {a['entidade']} | {a['id']} | "
-            f"{a['descricao']} | {a['evidencia'] or '—'} | {a['decisao_pendente']} |"
-        )
+    if payload["achados"]:
+        for a in payload["achados"]:
+            linhas.append(
+                f"| {a['codigo']} | {a['severidade']} | {a['classe']} | {a['entidade']} | {a['id']} | "
+                f"{a['descricao']} | {a['evidencia'] or '—'} | {a['decisao_pendente']} |"
+            )
+    else:
+        linhas.append("| — | — | — | — | — | nenhum achado de atenção nesta execução | — | — |")
+
+    linhas += ["", "## Perfil e inventário da fonte", "",
+               "Retrato da fonte, sem juízo: **não são problemas** e nao entram na contagem de achados. "
+               "Servem para o negocio ver o que a base contem (inventario de status, competencias, "
+               "colunas com vazios legitimos).",
+               "",
+               "| Codigo | Classe | Entidade | Item | Descricao | Evidencia | Decisao pendente |",
+               "| --- | --- | --- | --- | --- | --- | --- |"]
+    if payload["perfil_fonte"]:
+        for a in payload["perfil_fonte"]:
+            linhas.append(
+                f"| {a['codigo']} | {a['classe']} | {a['entidade']} | {a['id']} | "
+                f"{a['descricao']} | {a['evidencia'] or '—'} | {a['decisao_pendente']} |"
+            )
+    else:
+        linhas.append("| — | — | — | — | nenhum item de perfil nesta execução | — | — |")
 
     if resumo["decisoes_pendentes"]:
-        linhas += ["", "## Decisoes pendentes do negocio", ""]
+        linhas += ["", "## Decisoes pendentes do negocio", "",
+                   "Derivadas apenas dos achados de atenção:", ""]
         linhas += [f"- {d}" for d in resumo["decisoes_pendentes"]]
     linhas += ["", "---", "",
                "Nenhum registro foi corrigido, excluido ou completado por este diagnostico; "
@@ -692,12 +737,8 @@ def executar(entrada: Path, saida: Path, rotulo: str | None, periodo: str | None
     if not tabelas:
         raise SystemExit("ERRO: nenhuma tabela do contrato encontrada na entrada.")
 
-    payload = montar_payload(rotulo or entrada.stem, entrada, tipo, fontes, tabelas, periodo)
-    if achados_leitura:
-        payload["achados"] = achados_leitura + payload["achados"]
-        for i, achado in enumerate(payload["achados"], start=1):
-            achado["codigo"] = f"D-{i:03d}"
-        payload["resumo"]["achados_total"] = len(payload["achados"])
+    payload = montar_payload(rotulo or entrada.stem, entrada, tipo, fontes, tabelas, periodo,
+                             achados_iniciais=achados_leitura)
 
     saida.mkdir(parents=True, exist_ok=True)
     base = f"diagnostico_{payload['rotulo']}"
@@ -720,7 +761,8 @@ def main(argv=None) -> int:
     resumo = payload["resumo"]
     print(f"Diagnostico v{VERSAO} — {payload['rotulo']}")
     print(f"  tabelas lidas: {resumo['tabelas_lidas']} | registros: {resumo['registros_lidos']}")
-    print(f"  achados: {resumo['achados_total']} ({resumo['achados_por_severidade']})")
+    print(f"  achados que exigem atencao: {resumo['achados_total']} ({resumo['achados_por_severidade']})")
+    print(f"  itens de perfil/inventario da fonte: {resumo['itens_perfil_fonte']} (nao sao problemas)")
     print(f"  saida: {Path(args.saida) / ('diagnostico_' + payload['rotulo'])}.md / .json")
     print("  nenhum registro foi tratado, excluido ou corrigido (diagnostico observacional)")
     return 0
