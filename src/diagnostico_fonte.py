@@ -683,7 +683,7 @@ def render_markdown(payload: dict) -> str:
 
     linhas += ["", "## Achados que exigem atenção", "",
                "Anomalias e avisos: algo contradiz a estrutura esperada, impede um cruzamento confiável "
-               "ou precisa de confirmação antes de virar número. Nenhum deles e regra aprovada.",
+               "ou precisa de confirmação antes de virar número. Nenhum deles é regra aprovada.",
                "",
                "| Codigo | Sev. | Classe | Entidade | ID | Descricao | Evidencia | Decisao pendente |",
                "| --- | --- | --- | --- | --- | --- | --- | --- |"]
@@ -697,9 +697,9 @@ def render_markdown(payload: dict) -> str:
         linhas.append("| — | — | — | — | — | nenhum achado de atenção nesta execução | — | — |")
 
     linhas += ["", "## Perfil e inventário da fonte", "",
-               "Retrato da fonte, sem juízo: **não são problemas** e nao entram na contagem de achados. "
-               "Servem para o negocio ver o que a base contem (inventario de status, competencias, "
-               "colunas com vazios legitimos).",
+               "Retrato da fonte, sem juízo: **não são problemas** e não entram na contagem de achados. "
+               "Servem para o negócio ver o que a base contém (inventário de status, competências, "
+               "colunas com vazios legítimos).",
                "",
                "| Codigo | Classe | Entidade | Item | Descricao | Evidencia | Decisao pendente |",
                "| --- | --- | --- | --- | --- | --- | --- |"]
