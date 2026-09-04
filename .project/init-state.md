@@ -73,7 +73,7 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Validar `limiar_margem_servir_baixa` com Ana Martins (gate de classificação/recomendações).
 - Nomear o analista operador e completar contatos de Ana e Bruno em OWNERS.md (gate de release/sustentação).
 - Criar pasta `backups/` no OneDrive do projeto (gate de release).
-- Harness `tests/golden/run_golden.py` entra junto com o primeiro código (CI já exige quando `src/` existir) — não é pendência de conteúdo: casos e exceções já materializados.
+- ~~Harness `tests/golden/run_golden.py` entra junto com o primeiro código~~ — **criado em 2026-09-04** com a primeira feature da fase 1 (suite do diagnóstico implementada; suite de margens declarada pendente até a validação do Bruno — ver `tests/TEST_STRATEGY.md`).
 - Opcional: GitHub Project (quadro) quando o time quiser backlog visual.
 
 ## Achados de ambiente
