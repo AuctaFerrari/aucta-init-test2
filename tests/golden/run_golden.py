@@ -12,7 +12,10 @@ Suites:
   2. Caminho .xlsx (entrada principal de producao) — gera a fixture .xlsx a
      partir das CSVs controladas, executa o mesmo entrypoint sobre ela e exige
      resultado identico ao caminho CSV, com o arquivo de entrada intocado.
-  3. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
+  3. Textos de apresentacao em pt-BR (titulos e cabecalhos acentuados, nenhuma
+     forma desacentuada nos textos fixos) e decisoes pendentes consolidadas:
+     D-003 e D-006 seguem como dois achados, com uma unica decisao no resumo.
+  4. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
      nesta versao: nao existe modulo de calculo no repositorio e as formulas
      TRUTH-001..005 seguem pendentes de validacao formal da controladoria
      (gate do primeiro /change-number). A suite FALHA de proposito se aparecer
@@ -28,6 +31,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -282,8 +286,88 @@ def suite_excel(payload_csv: dict) -> None:
             checar(True, "origem de cada tabela aponta para a aba lida no arquivo")
 
 
+# Textos fixos de apresentação que devem existir acentuados no relatório.
+TITULOS_ACENTUADOS = [
+    "# Diagnóstico de qualidade da fonte",
+    "## Achados que exigem atenção",
+    "## Perfil e inventário da fonte",
+    "## Decisões pendentes do negócio",
+    "| Código | Sev. | Classe | Entidade | ID | Descrição | Evidência | Decisão pendente |",
+    "| Código | Classe | Entidade | Item | Descrição | Evidência | Decisão pendente |",
+    "| Relação | Força | Registros | Sem correspondência |",
+    "- Período informado:",
+    "Distribuição de",
+]
+
+# Formas SEM acento que nunca devem reaparecer nos textos de apresentação.
+# São palavras que só existem no texto fixo — nenhuma delas é nome de coluna,
+# valor da fonte ou chave do JSON (chaves seguem snake_case ASCII de propósito).
+FORMAS_SEM_ACENTO = [
+    "Diagnostico", "Decisao", "Decisoes", "Codigo", "Descricao", "Evidencia",
+    "Periodo", "Relacao", "Distribuicao", "negocio", "decisao", "versao",
+    "atencao", "inventario", "numerico", "padrao", "competencias",
+    "correspondencia", "excluido", "excluidos", "legitimo", "unico",
+]
+
+
+def suite_textos(payload: dict, markdown: str) -> None:
+    print("== Suite 3: textos de apresentação em pt-BR e decisões consolidadas ==")
+
+    # 1. títulos e cabeçalhos acentuados presentes no relatório
+    ausentes = [titulo for titulo in TITULOS_ACENTUADOS if titulo not in markdown]
+    checar(not ausentes, "títulos e cabeçalhos do relatório acentuados",
+           f"ausentes: {ausentes}")
+
+    # 2. nenhuma forma sem acento no relatório
+    achadas = sorted({forma for forma in FORMAS_SEM_ACENTO
+                      if re.search(rf"\b{re.escape(forma)}\b", markdown)})
+    checar(not achadas, "relatório sem formas desacentuadas nos textos fixos",
+           f"encontradas: {achadas}")
+
+    # 3. nenhuma forma sem acento nos textos do JSON (chaves ficam fora:
+    #    snake_case ASCII é intencional)
+    textos = [payload["natureza"]] + payload["resumo"]["decisoes_pendentes"]
+    for item in payload["achados"] + payload["perfil_fonte"]:
+        textos += [item["descricao"], item["decisao_pendente"]]
+    juntos = "\n".join(textos)
+    achadas_json = sorted({forma for forma in FORMAS_SEM_ACENTO
+                           if re.search(rf"\b{re.escape(forma)}\b", juntos)})
+    checar(not achadas_json, "textos do JSON sem formas desacentuadas",
+           f"encontradas: {achadas_json}")
+
+    # 4. UTF-8 de verdade: o relatório decodifica e traz acentuação
+    checar(any(c in markdown for c in "áâãéêíóôõúçÁÉÍÓÚ"),
+           "relatório carrega caracteres acentuados (UTF-8)")
+
+    # 5. D-003 e D-006 continuam DOIS achados distintos...
+    o004 = [a for a in payload["achados"] if a["id"] == "O004"]
+    classes = sorted(a["classe"] for a in o004)
+    checar(len(o004) == 2 and classes == ["CONSISTENCIA", "RELACIONAMENTO"],
+           "identificador fora do padrão e chave sem correspondência seguem como 2 achados",
+           f"achados de O004: {[(a['codigo'], a['classe']) for a in o004]}")
+    checar(sorted(a["status_evidencia"] for a in o004) == ["hipotese", "observado"],
+           "os dois achados preservam status de evidência distintos")
+
+    # 6. ...mas apontam para UMA decisão, com formulação idêntica
+    decisoes_o004 = {a["decisao_pendente"] for a in o004}
+    checar(len(decisoes_o004) == 1,
+           "os dois achados usam a formulação canônica única da decisão",
+           f"formulações: {sorted(decisoes_o004)}")
+
+    # 7. o resumo consolidado traz essa decisão uma única vez
+    sobre_normalizacao = [d for d in payload["resumo"]["decisoes_pendentes"]
+                          if "normaliza" in d.lower()]
+    checar(len(sobre_normalizacao) == 1,
+           "resumo consolidado com uma única decisão de normalização",
+           f"encontradas: {sobre_normalizacao}")
+
+    # 8. o resumo não repete decisão nenhuma
+    pendentes = payload["resumo"]["decisoes_pendentes"]
+    checar(len(pendentes) == len(set(pendentes)), "resumo sem decisão repetida")
+
+
 def suite_margens() -> None:
-    print("== Suite 3: margens / golden cases (GC-01..03) ==")
+    print("== Suite 4: margens / golden cases (GC-01..03) ==")
     modulos = sorted(p.name for p in SRC.glob("*.py")) if SRC.exists() else []
     fora_da_lista = [m for m in modulos if m not in MODULOS_OBSERVACIONAIS]
     if fora_da_lista:
@@ -301,6 +385,11 @@ def main() -> int:
     print(f"Harness de conferencia — repo {RAIZ.name}")
     payload_csv = suite_diagnostico()
     suite_excel(payload_csv)
+    with tempfile.TemporaryDirectory() as tmp:
+        saida = Path(tmp) / "textos"
+        payload = rodar_diagnostico(saida, rotulo="harness_textos")
+        markdown = (saida / "diagnostico_harness_textos.md").read_text(encoding="utf-8")
+    suite_textos(payload, markdown)
     suite_margens()
     if falhas:
         print(f"\nRESULTADO: {len(falhas)} falha(s) — {falhas}")
