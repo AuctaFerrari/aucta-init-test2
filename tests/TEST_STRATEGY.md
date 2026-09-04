@@ -18,12 +18,17 @@ Colunas intermediárias (receita líquida, MC, custos) também são conferidas �
 
 EX-01..07: dedupe O006 (fica custo 260), exclusão O005, normalização " c003 ", órfão O010/C999, nulos O008/O009, visita V008 sem data. **EX-04, EX-05 e EX-06 bloqueiam a publicação do relatório** enquanto não tratadas.
 
-## Harness (tests/golden/run_golden.py — entra com o primeiro código)
+## Harness (tests/golden/run_golden.py — criado em 2026-09-04, com o primeiro código)
 
-1. Recomputa os golden por implementação INDEPENDENTE do pipeline sob teste, a partir de tests/fixtures/*.csv.
-2. Compara com golden_cases.csv (tolerância R$ 0,00) e com a saída do pipeline.
-3. Verifica que o log de tratamento do pipeline cobre TODAS as linhas de expected_exceptions.csv e que EX-04..06 travam a publicação.
-4. Reconciliação (ACC-006): totais válidos da origem × processados = diferença zero após exclusões documentadas.
+Princípio permanente: toda suite recomputa a referência por implementação INDEPENDENTE do código sob teste, a partir de `tests/fixtures/*.csv`.
+
+**Suite 1 — Diagnóstico da fonte (observacional) — IMPLEMENTADA.** Recomputa contagens por tabela, vazios por coluna, identificadores duplicados e chaves sem correspondência; confere que cada exceção conhecida (EX-01..07) aparece nos achados; prova que nada foi tratado (13 registros de vendas lidos, duplicata O006 preservada); confere determinismo (duas execuções, bytes idênticos) e integridade da origem (SHA-256 antes/depois); confere que nenhum campo de indicador de negócio existe na saída.
+
+**Suite 2 — Margens / golden cases (GC-01..03) — PENDENTE.** Não implementada enquanto não existir módulo de cálculo: as fórmulas TRUTH-001..005 aguardam validação formal da controladoria (gate do primeiro `/change-number`). A suite **falha de propósito** se aparecer em `src/` qualquer módulo fora da lista observacional declarada no harness — o gate de tier 2 não pode ser atravessado sem golden. Quando implementada, deve cobrir:
+
+1. Comparação com golden_cases.csv (tolerância R$ 0,00) e com a saída do pipeline.
+2. Log de tratamento cobrindo TODAS as linhas de expected_exceptions.csv, com EX-04..06 travando a publicação.
+3. Reconciliação (ACC-006): totais válidos da origem × processados = diferença zero após exclusões documentadas.
 
 O CI (`.github/ci/run-checks.sh`, guarda 4) passa a EXIGIR o harness assim que `src/` existir. Golden rodam before/after em todo /change-number; refatoração do motor re-roda os golden do critério vigente no mesmo ciclo.
 
