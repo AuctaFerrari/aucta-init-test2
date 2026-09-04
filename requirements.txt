@@ -1,0 +1,15 @@
+# Dependencias da solucao Aucta Foods - Rentabilidade por Cliente.
+#
+# Instalacao reproduzivel (versao fixa + hash verificado):
+#     python -m pip install --require-hashes -r requirements.txt
+#
+# openpyxl: leitura da base operacional mensal em .xlsx (caminho principal de
+# producao). O caminho alternativo de leitura, uma pasta com uma CSV por aba,
+# usa apenas a biblioteca padrao e nao depende deste arquivo.
+# et-xmlfile e dependencia direta de openpyxl e vem fixada aqui porque
+# --require-hashes exige a arvore completa declarada.
+
+openpyxl==3.1.5 \
+    --hash=sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2
+et-xmlfile==2.0.0 \
+    --hash=sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa

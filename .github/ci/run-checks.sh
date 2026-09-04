@@ -27,6 +27,22 @@ else
   echo "ok: src/ ainda não existe (pré-desenvolvimento)"
 fi
 
+echo "== 3b. Dependências declaradas (instalação reproduzível) =="
+if [ -d src ] && [ -f requirements.txt ]; then
+  # Versões fixas com hash verificado (requirements.txt). O caminho .xlsx da
+  # solução depende de openpyxl; sem ele a suite Excel do harness reprova.
+  if python3 -m pip install --quiet --require-hashes -r requirements.txt >/dev/null 2>&1; then
+    echo "ok: dependências instaladas (--require-hashes)"
+  elif python3 -m pip install --quiet --require-hashes --break-system-packages -r requirements.txt; then
+    echo "ok: dependências instaladas (--require-hashes, --break-system-packages)"
+  else
+    echo "FALHA: não foi possível instalar as dependências de requirements.txt"
+    fail=1
+  fi
+else
+  echo "ok: nada a instalar (sem src/ ou sem requirements.txt)"
+fi
+
 echo "== 4. Golden cases (tier 2: obrigatórios quando houver código) =="
 if [ -d src ]; then
   if [ -f tests/golden/run_golden.py ]; then
