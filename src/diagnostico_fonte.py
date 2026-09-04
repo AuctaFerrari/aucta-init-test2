@@ -16,6 +16,11 @@ A saida separa o que exige atencao (anomalia/aviso, codigos D-###) do perfil e
 inventario da fonte (informativo, codigos P-###), com contadores independentes:
 inventario de status nao infla a contagem de problemas.
 
+Textos exibidos ao usuario (titulos, descricoes, decisoes e mensagens) usam
+pt-BR acentuado em UTF-8. Chaves do JSON e valores de enumeracao (classe,
+severidade, status_evidencia, forca) seguem ASCII de proposito: sao rotulos
+tecnicos usados em comparacoes e filtros, nao texto de leitura.
+
 Saidas deterministicas: mesmas entradas produzem bytes identicos (nao ha
 carimbo de tempo no conteudo; a auditoria se faz pelo SHA-256 das entradas).
 
@@ -109,6 +114,12 @@ RELACIONAMENTOS = [
     {"origem": ["vendas", "pedido_id"], "destino": ["custos_logisticos", "pedido_id"], "forca": "informativa"},
 ]
 
+# Decisão pendente compartilhada: D-003 (identificador fora do padrão) e
+# D-006 (chave que só casaria após normalização) são achados DIFERENTES,
+# preservados separadamente, mas apontam para a MESMA decisão de negócio.
+# Usar a mesma formulação canônica evita duplicidade no resumo consolidado.
+DECISAO_NORMALIZACAO_IDS = ("O negócio aprova a regra de normalização de identificadores antes de qualquer cruzamento")
+
 RE_INTEIRO = re.compile(r"^-?\d+$")
 RE_DECIMAL = re.compile(r"^-?\d+[.,]\d+$")
 RE_DATA = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -138,8 +149,8 @@ def ler_csvs(pasta: Path) -> tuple[dict, dict, list]:
         caminho = pasta / contrato["arquivo"]
         if not caminho.exists():
             achados.append(_achado("FONTE", "tabela", nome, "aviso",
-                                   f"tabela esperada ausente na fonte (arquivo {contrato['arquivo']})",
-                                   "observado", "negocio confirma se a tabela foi descontinuada ou se o arquivo veio incompleto"))
+                                   f"Tabela esperada ausente na fonte (arquivo {contrato['arquivo']})",
+                                   "observado", "O negócio confirma se a tabela foi descontinuada ou se o arquivo veio incompleto"))
             continue
         with caminho.open(newline="", encoding="utf-8") as fh:
             linhas = list(csv.reader(fh))
@@ -155,7 +166,7 @@ def ler_xlsx(caminho: Path) -> tuple[dict, dict, list]:
         from openpyxl import load_workbook
     except ImportError:  # pragma: no cover - ambiente sem openpyxl
         raise SystemExit(
-            "ERRO: leitura de .xlsx exige a biblioteca openpyxl. Instale com "
+            "ERRO: a leitura de .xlsx exige a biblioteca openpyxl. Instale com "
             "'python -m pip install --require-hashes -r requirements.txt' ou aponte "
             "--entrada para a pasta com as CSVs."
         )
@@ -166,8 +177,8 @@ def ler_xlsx(caminho: Path) -> tuple[dict, dict, list]:
     for aba, nome in esperadas.items():
         if aba not in presentes:
             achados.append(_achado("FONTE", "tabela", nome, "aviso",
-                                   f"aba esperada ausente na planilha: {aba}",
-                                   "observado", "negocio confirma se a aba foi descontinuada ou se o arquivo veio incompleto"))
+                                   f"Aba esperada ausente na planilha: {aba}",
+                                   "observado", "O negócio confirma se a aba foi descontinuada ou se o arquivo veio incompleto"))
             continue
         planilha = livro[aba]
         linhas = [[_texto(c) for c in linha] for linha in planilha.iter_rows(values_only=True)]
@@ -178,8 +189,8 @@ def ler_xlsx(caminho: Path) -> tuple[dict, dict, list]:
     for aba in presentes:
         if aba not in esperadas:
             achados.append(_achado("FONTE", "aba", aba, "aviso",
-                                   f"aba nao prevista no contrato da fonte: {aba} (ignorada pelo diagnostico)",
-                                   "observado", "negocio informa se a aba passa a fazer parte da rotina"))
+                                   f"Aba não prevista no contrato da fonte: {aba} — ignorada pelo diagnóstico",
+                                   "observado", "O negócio informa se a aba passa a fazer parte da rotina"))
     livro.close()
     hash_arquivo = _sha256(caminho)
     fontes = {nome: {"origem": f"{caminho.name}::{CONTRATO[nome]['aba']}", "sha256": hash_arquivo} for nome in tabelas}
@@ -228,7 +239,7 @@ def perfil_coluna(valores: list[str]) -> dict:
     if not tipos:
         tipo = "vazio"
     elif tipos == {"inteiro", "decimal"}:
-        tipo = "numerico"
+        tipo = "numérico"
     elif len(tipos) == 1:
         tipo = next(iter(tipos))
     else:
@@ -260,17 +271,17 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
     excedentes = [c for c in colunas if c not in contrato["colunas"]]
     if faltando:
         achados.append(_achado("ESQUEMA", nome, "-", "aviso",
-                               "colunas esperadas ausentes: " + ", ".join(faltando),
-                               "observado", "negocio/TI confirma mudanca de layout da extracao"))
+                               "Colunas esperadas ausentes: " + ", ".join(faltando),
+                               "observado", "O negócio ou a TI confirma a mudança de layout da extração"))
     if excedentes:
         achados.append(_achado("ESQUEMA", nome, "-", "aviso",
-                               "colunas nao previstas no contrato: " + ", ".join(excedentes),
-                               "observado", "negocio informa se as colunas novas entram no calculo"))
+                               "Colunas não previstas no contrato: " + ", ".join(excedentes),
+                               "observado", "O negócio informa se as colunas novas entram no cálculo"))
     if len(set(colunas)) != len(colunas):
         repetidas = sorted({c for c in colunas if colunas.count(c) > 1})
         achados.append(_achado("ESQUEMA", nome, "-", "anomalia",
-                               "colunas com nome repetido: " + ", ".join(repetidas),
-                               "observado", "corrigir a extracao na origem"))
+                               "Colunas com nome repetido: " + ", ".join(repetidas),
+                               "observado", "Corrigir a extração na origem"))
 
     perfil = {c: perfil_coluna([r.get(c, "") for r in registros]) for c in colunas}
 
@@ -281,9 +292,9 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
         vazios = [_ident(nome, r, i) for i, r in enumerate(registros, start=2) if r.get(coluna, "").strip() == ""]
         if vazios:
             achados.append(_achado("COMPLETUDE", nome, ", ".join(vazios), "anomalia",
-                                   f"campo essencial '{coluna}' vazio em {len(vazios)} registro(s)",
+                                   f"Campo essencial '{coluna}' vazio em {len(vazios)} registro(s)",
                                    "observado",
-                                   "negocio decide o tratamento (excluir, corrigir na origem ou bloquear a entrega)",
+                                   "O negócio decide o tratamento: excluir, corrigir na origem ou bloquear a entrega",
                                    f"linhas: {', '.join(vazios)}"))
     for coluna in colunas:
         if coluna in contrato["essenciais"]:
@@ -291,12 +302,12 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
         p = perfil[coluna]
         if p["nulos"] and p["preenchidos"]:
             achados.append(_achado("COMPLETUDE", nome, coluna, "informativo",
-                                   f"coluna '{coluna}' com {p['nulos']} valor(es) vazio(s) de {p['registros']}",
-                                   "observado", "negocio confirma se o vazio e legitimo nesta coluna"))
+                                   f"Coluna '{coluna}' com {p['nulos']} valor(es) vazio(s) de {p['registros']}",
+                                   "observado", "O negócio confirma se o vazio é legítimo nesta coluna"))
         elif p["nulos"] and not p["preenchidos"]:
             achados.append(_achado("COMPLETUDE", nome, coluna, "aviso",
-                                   f"coluna '{coluna}' inteiramente vazia",
-                                   "observado", "negocio confirma se a coluna ainda e alimentada na origem"))
+                                   f"Coluna '{coluna}' inteiramente vazia",
+                                   "observado", "O negócio confirma se a coluna ainda é alimentada na origem"))
 
     # duplicidade de identificador
     chave = contrato["chave"]
@@ -308,10 +319,10 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
         for valor, linhas in sorted(indice.items()):
             if len(linhas) > 1:
                 achados.append(_achado("DUPLICIDADE", nome, valor, "anomalia",
-                                       f"identificador {'+'.join(chave)} repetido em {len(linhas)} registros "
-                                       "(nenhuma versao foi descartada por este diagnostico)",
+                                       f"Identificador {'+'.join(chave)} repetido em {len(linhas)} registros "
+                                       "— nenhuma versão foi descartada por este diagnóstico",
                                        "observado",
-                                       "negocio define qual versao prevalece e como registrar o descarte",
+                                       "O negócio define qual versão prevalece e como registrar o descarte",
                                        f"linhas: {', '.join(str(n) for n in linhas)}"))
 
     # tipos e valores
@@ -330,12 +341,12 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
                 negativos.append(_ident(nome, r, i))
         if invalidos:
             achados.append(_achado("CONSISTENCIA", nome, ", ".join(invalidos), "anomalia",
-                                   f"coluna numerica '{coluna}' com valor nao numerico",
-                                   "observado", "corrigir na origem ou definir conversao aprovada"))
+                                   f"Coluna numérica '{coluna}' com valor não numérico",
+                                   "observado", "Corrigir na origem ou definir a conversão aprovada"))
         if negativos:
             achados.append(_achado("CONSISTENCIA", nome, ", ".join(negativos), "aviso",
-                                   f"coluna numerica '{coluna}' com valor negativo",
-                                   "observado", "negocio confirma se valor negativo e legitimo (estorno?)"))
+                                   f"Coluna numérica '{coluna}' com valor negativo",
+                                   "observado", "O negócio confirma se valor negativo é legítimo, por exemplo um estorno"))
     for coluna in contrato["datas"]:
         if coluna not in colunas:
             continue
@@ -346,8 +357,8 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
         ]
         if invalidos:
             achados.append(_achado("CONSISTENCIA", nome, ", ".join(invalidos), "anomalia",
-                                   f"coluna de data '{coluna}' com formato nao reconhecido",
-                                   "observado", "corrigir na origem ou definir formato aprovado"))
+                                   f"Coluna de data '{coluna}' com formato não reconhecido",
+                                   "observado", "Corrigir na origem ou definir o formato aprovado"))
 
     # identificadores fora do padrao (sem normalizar)
     for coluna in [c for c in colunas if c.endswith("_id")]:
@@ -360,10 +371,10 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
                 fora.append((_ident(nome, r, i), i, bruto))
         if fora:
             achados.append(_achado("CONSISTENCIA", nome, ", ".join(ident for ident, _, _ in fora), "anomalia",
-                                   f"identificador '{coluna}' fora do padrao observado (espacos ou caixa divergente); "
-                                   "valor PRESERVADO como esta na fonte",
+                                   f"Identificador '{coluna}' fora do padrão observado (espaços ou caixa divergente); "
+                                   "valor PRESERVADO como está na fonte",
                                    "observado",
-                                   "negocio aprova a regra de normalizacao antes de qualquer cruzamento",
+                                   DECISAO_NORMALIZACAO_IDS,
                                    "; ".join(f"linha {linha}: {coluna}={bruto!r}" for _, linha, bruto in fora)))
 
     # colunas constantes
@@ -371,8 +382,8 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
         p = perfil[coluna]
         if p["preenchidos"] == p["registros"] and p["distintos"] == 1 and p["registros"] > 1:
             achados.append(_achado("FONTE", nome, coluna, "aviso",
-                                   f"coluna '{coluna}' com valor unico em todos os registros ({p['exemplos'][0]})",
-                                   "observado", "negocio confirma se a coluna e alimentada de fato"))
+                                   f"Coluna '{coluna}' com valor único em todos os registros ({p['exemplos'][0]})",
+                                   "observado", "O negócio confirma se a coluna é alimentada de fato"))
 
     # distribuicao de categorias (informativo, sem julgar dominio)
     distribuicoes = {}
@@ -397,10 +408,10 @@ def analisar_tabela(nome: str, tabela: dict) -> tuple[dict, list]:
                 amostra = ", ".join(ids[:10]) + (" …" if len(ids) > 10 else "")
                 achados.append(_achado(
                     "CONSISTENCIA", nome, valor or "(vazio)", "informativo",
-                    f"status '{valor or '(vazio)'}' presente em {len(ids)} de {len(registros)} registro(s); "
-                    "nenhum registro foi excluido por causa do status",
+                    f"Status '{valor or '(vazio)'}' presente em {len(ids)} de {len(registros)} registro(s); "
+                    "nenhum registro foi excluído por causa do status",
                     "observado",
-                    f"negocio define quais valores de '{coluna}' entram no calculo e quais sao excluidos",
+                    f"O negócio define quais valores de '{coluna}' entram no cálculo e quais são excluídos",
                     f"ids: {amostra}"))
 
     resumo = {
@@ -455,20 +466,20 @@ def analisar_relacionamentos(tabelas: dict) -> tuple[list, list]:
                 achados.append(_achado(
                     "RELACIONAMENTO", t_org, item["id_origem"],
                     "anomalia" if rel["forca"] == "obrigatoria" else "informativo",
-                    f"{c_org}={item['valor']!r} nao casa com {t_dst}.{c_dst} como esta na fonte; "
-                    f"casaria com {item['candidato_apos_normalizacao']!r} se normalizado (normalizacao NAO aplicada)",
+                    f"{c_org}={item['valor']!r} não casa com {t_dst}.{c_dst} como está na fonte; "
+                    f"casaria com {item['candidato_apos_normalizacao']!r} se normalizado — normalização NÃO aplicada",
                     "hipotese",
-                    "negocio aprova a regra de normalizacao de identificadores",
+                    DECISAO_NORMALIZACAO_IDS,
                     f"linha {item['linha']}"))
             else:
                 achados.append(_achado(
                     "RELACIONAMENTO", t_org, item["id_origem"],
                     "anomalia" if rel["forca"] == "obrigatoria" else "informativo",
-                    f"{c_org}={item['valor']!r} sem correspondencia em {t_dst}.{c_dst} "
-                    f"({'quebra de relacionamento obrigatorio' if rel['forca'] == 'obrigatoria' else 'ausencia informativa'}); "
+                    f"{c_org}={item['valor']!r} sem correspondência em {t_dst}.{c_dst} "
+                    f"({'quebra de relacionamento obrigatório' if rel['forca'] == 'obrigatoria' else 'ausência informativa'}); "
                     "registro PRESERVADO",
                     "observado",
-                    "negocio decide entre completar o cadastro na origem, excluir ou bloquear a entrega",
+                    "O negócio decide entre completar o cadastro na origem, excluir o registro ou bloquear a entrega",
                     f"linha {item['linha']}"))
     return resultados, achados
 
@@ -484,23 +495,23 @@ def analisar_contradicoes(tabelas: dict) -> list:
             vid = r.get("visita_id", "").strip() or f"linha {i}"
             if status.lower().startswith("realizad") and realizada == "":
                 achados.append(_achado("CONSISTENCIA", "visitas", vid, "anomalia",
-                                       f"status '{status}' sem data_realizada — status e data se contradizem",
+                                       f"Status '{status}' sem data_realizada — status e data se contradizem",
                                        "observado",
-                                       "negocio decide se a visita conta como realizada, e sob qual evidencia",
+                                       "O negócio decide se a visita conta como realizada e sob qual evidência",
                                        f"linha {i}"))
             if status != "" and not status.lower().startswith("realizad") and realizada != "":
                 achados.append(_achado("CONSISTENCIA", "visitas", vid, "anomalia",
-                                       f"status '{status}' com data_realizada preenchida — status e data se contradizem",
-                                       "observado", "negocio decide qual campo prevalece", f"linha {i}"))
+                                       f"Status '{status}' com data_realizada preenchida — status e data se contradizem",
+                                       "observado", "O negócio decide qual campo prevalece", f"linha {i}"))
             if realizada and planejada and RE_DATA.match(realizada) and RE_DATA.match(planejada) and realizada < planejada:
                 achados.append(_achado("CONSISTENCIA", "visitas", vid, "aviso",
-                                       "data_realizada anterior a data_planejada",
-                                       "observado", "negocio confirma se antecipacao e valida", f"linha {i}"))
+                                       "Data realizada anterior à data planejada",
+                                       "observado", "O negócio confirma se a antecipação é válida", f"linha {i}"))
             mes = r.get("mes_ref", "").strip()
             if mes and planejada and RE_DATA.match(planejada) and not planejada.startswith(mes):
                 achados.append(_achado("CONSISTENCIA", "visitas", vid, "aviso",
-                                       f"mes_ref {mes} nao corresponde a data_planejada {planejada}",
-                                       "observado", "negocio confirma qual campo define o mes de competencia", f"linha {i}"))
+                                       f"mes_ref {mes} não corresponde à data_planejada {planejada}",
+                                       "observado", "O negócio confirma qual campo define o mês de competência", f"linha {i}"))
 
     if "vendas" in tabelas:
         for i, r in enumerate(tabelas["vendas"]["registros"], start=2):
@@ -508,8 +519,8 @@ def analisar_contradicoes(tabelas: dict) -> list:
             receita, desconto = _numero(r.get("receita_bruta", "")), _numero(r.get("desconto", ""))
             if receita is not None and desconto is not None and desconto > receita:
                 achados.append(_achado("CONSISTENCIA", "vendas", pid, "anomalia",
-                                       "desconto maior que a receita bruta",
-                                       "observado", "negocio confirma se o registro e valido", f"linha {i}"))
+                                       "Desconto maior que a receita bruta",
+                                       "observado", "O negócio confirma se o registro é válido", f"linha {i}"))
 
     # status entre tabelas: cliente com status distinto de 'Ativo' movimentado
     if "clientes" in tabelas:
@@ -523,9 +534,9 @@ def analisar_contradicoes(tabelas: dict) -> list:
                 status = status_cliente.get(cid)
                 if status and status.lower() != "ativo":
                     achados.append(_achado("CONSISTENCIA", tabela, _ident(tabela, r, i), "aviso",
-                                           f"movimento vinculado a cliente {cid} com status '{status}' no cadastro",
+                                           f"Movimento vinculado a cliente {cid} com status '{status}' no cadastro",
                                            "observado",
-                                           "negocio decide se cliente nao ativo entra no relatorio",
+                                           "O negócio decide se cliente não ativo entra no relatório",
                                            f"linha {i}"))
 
     if "parametros" in tabelas:
@@ -533,9 +544,9 @@ def analisar_contradicoes(tabelas: dict) -> list:
             status = r.get("status", "").strip()
             if status and status.lower() != "vigente":
                 achados.append(_achado("FONTE", "parametros", r.get("parametro", "").strip() or f"linha {i}", "aviso",
-                                       f"parametro com status '{status}' — valor ainda nao e regra vigente",
+                                       f"Parâmetro com status '{status}' — valor ainda não é regra vigente",
                                        "observado",
-                                       "negocio valida o parametro antes de usa-lo em numero entregue",
+                                       "O negócio valida o parâmetro antes de usá-lo em número entregue",
                                        f"linha {i}; fonte declarada: {r.get('fonte', '')}"))
 
     return achados
@@ -554,16 +565,16 @@ def analisar_periodo(tabelas: dict, periodo: str | None) -> list:
         return achados
     meses = sorted({m for m, _, _, _ in observados})
     achados.append(_achado("FONTE", "fonte", "-", "informativo",
-                           f"competencias observadas na fonte: {meses[0]} a {meses[-1]} ({len(meses)} mes(es))",
+                           f"Competências observadas na fonte: {meses[0]} a {meses[-1]} ({len(meses)} mês(es))",
                            "observado", "-"))
     if periodo:
         inicio, fim = (periodo.split(":") + [periodo])[:2]
         fora = sorted({f"{nome}.{coluna}={mes}" for mes, nome, coluna, _ in observados if mes < inicio or mes > fim})
         if fora:
             achados.append(_achado("FONTE", "fonte", "-", "aviso",
-                                   f"datas fora do periodo informado ({inicio} a {fim}): {len(fora)} ocorrencia(s)",
+                                   f"Datas fora do período informado ({inicio} a {fim}): {len(fora)} ocorrência(s)",
                                    "observado",
-                                   "negocio confirma se o arquivo mensal veio com competencia extra",
+                                   "O negócio confirma se o arquivo mensal veio com competência extra",
                                    "; ".join(fora[:10])))
     return achados
 
@@ -627,16 +638,16 @@ def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo, acha
 
 def render_markdown(payload: dict) -> str:
     linhas = [
-        f"# Diagnostico de qualidade da fonte — {payload['rotulo']}",
+        f"# Diagnóstico de qualidade da fonte — {payload['rotulo']}",
         "",
-        f"> Diagnostico **observacional** (v{payload['versao_diagnostico']}). Descreve a fonte como ela esta: "
-        "nao normaliza, nao deduplica, nao exclui, nao imputa, nao calcula indicador e nao altera o arquivo de origem. "
-        "Cada achado aponta a decisao que o negocio precisa tomar; nenhuma anomalia aqui e regra aprovada.",
+        f"> Diagnóstico **observacional** (v{payload['versao_diagnostico']}). Descreve a fonte como ela está: "
+        "não normaliza, não deduplica, não exclui, não imputa, não calcula indicador e não altera o arquivo de origem. "
+        "Cada achado aponta a decisão que o negócio precisa tomar; nenhuma anomalia aqui é regra aprovada.",
         "",
         "## Fonte",
         "",
         f"- Entrada: `{payload['entrada']['nome']}` ({payload['entrada']['tipo']})",
-        f"- Periodo informado: {payload['entrada']['periodo_informado'] or 'nao informado'}",
+        f"- Período informado: {payload['entrada']['periodo_informado'] or 'não informado'}",
         "",
         "| Tabela | Origem | SHA-256 (entrada) | Registros |",
         "| --- | --- | --- | --- |",
@@ -673,11 +684,11 @@ def render_markdown(payload: dict) -> str:
             linhas.append(f"| {coluna} | {p['tipo_inferido']} | {p['preenchidos']} | {p['nulos']} | {p['distintos']} | {exemplos} |")
         for coluna, dist in res["distribuicoes"].items():
             linhas.append("")
-            linhas.append(f"Distribuicao de `{coluna}`: "
+            linhas.append(f"Distribuição de `{coluna}`: "
                           + ", ".join(f"{k or '(vazio)'} = {v}" for k, v in dist.items()))
         linhas.append("")
 
-    linhas += ["## Relacionamentos", "", "| Relacao | Forca | Registros | Sem correspondencia |", "| --- | --- | --- | --- |"]
+    linhas += ["## Relacionamentos", "", "| Relação | Força | Registros | Sem correspondência |", "| --- | --- | --- | --- |"]
     for rel in payload["relacionamentos"]:
         linhas.append(f"| `{rel['relacao']}` | {rel['forca']} | {rel['registros_origem']} | {rel['sem_correspondencia']} |")
 
@@ -685,7 +696,7 @@ def render_markdown(payload: dict) -> str:
                "Anomalias e avisos: algo contradiz a estrutura esperada, impede um cruzamento confiável "
                "ou precisa de confirmação antes de virar número. Nenhum deles é regra aprovada.",
                "",
-               "| Codigo | Sev. | Classe | Entidade | ID | Descricao | Evidencia | Decisao pendente |",
+               "| Código | Sev. | Classe | Entidade | ID | Descrição | Evidência | Decisão pendente |",
                "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     if payload["achados"]:
         for a in payload["achados"]:
@@ -701,7 +712,7 @@ def render_markdown(payload: dict) -> str:
                "Servem para o negócio ver o que a base contém (inventário de status, competências, "
                "colunas com vazios legítimos).",
                "",
-               "| Codigo | Classe | Entidade | Item | Descricao | Evidencia | Decisao pendente |",
+               "| Código | Classe | Entidade | Item | Descrição | Evidência | Decisão pendente |",
                "| --- | --- | --- | --- | --- | --- | --- |"]
     if payload["perfil_fonte"]:
         for a in payload["perfil_fonte"]:
@@ -713,12 +724,12 @@ def render_markdown(payload: dict) -> str:
         linhas.append("| — | — | — | — | nenhum item de perfil nesta execução | — | — |")
 
     if resumo["decisoes_pendentes"]:
-        linhas += ["", "## Decisoes pendentes do negocio", "",
+        linhas += ["", "## Decisões pendentes do negócio", "",
                    "Derivadas apenas dos achados de atenção:", ""]
         linhas += [f"- {d}" for d in resumo["decisoes_pendentes"]]
     linhas += ["", "---", "",
-               "Nenhum registro foi corrigido, excluido ou completado por este diagnostico; "
-               "as regras de tratamento sao decididas pelo negocio e implementadas em uma mudanca posterior.", ""]
+               "Nenhum registro foi corrigido, excluído ou completado por este diagnóstico; "
+               "as regras de tratamento são decididas pelo negócio e implementadas em uma mudança posterior.", ""]
     return "\n".join(linhas)
 
 
@@ -733,9 +744,9 @@ def executar(entrada: Path, saida: Path, rotulo: str | None, periodo: str | None
         tabelas, fontes, achados_leitura = ler_xlsx(entrada)
         tipo = "planilha Excel"
     else:
-        raise SystemExit(f"ERRO: entrada nao suportada: {entrada} (esperado .xlsx ou pasta com CSVs)")
+        raise SystemExit(f"ERRO: entrada não suportada: {entrada} — esperado .xlsx ou pasta com CSVs")
     if not tabelas:
-        raise SystemExit("ERRO: nenhuma tabela do contrato encontrada na entrada.")
+        raise SystemExit("ERRO: nenhuma tabela do contrato foi encontrada na entrada.")
 
     payload = montar_payload(rotulo or entrada.stem, entrada, tipo, fontes, tabelas, periodo,
                              achados_iniciais=achados_leitura)
@@ -750,21 +761,21 @@ def executar(entrada: Path, saida: Path, rotulo: str | None, periodo: str | None
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description="Diagnostico observacional de qualidade da base operacional (nao trata, nao calcula).")
+        description="Diagnóstico observacional de qualidade da base operacional: não trata, não calcula.")
     parser.add_argument("--entrada", required=True, help="arquivo .xlsx da base mensal OU pasta com uma CSV por aba")
-    parser.add_argument("--saida", default="outputs/diagnostico", help="pasta de saida (default: outputs/diagnostico)")
-    parser.add_argument("--rotulo", default=None, help="rotulo da execucao usado no nome dos arquivos (ex.: 2026-01)")
-    parser.add_argument("--periodo", default=None, help="competencia esperada, ex.: 2026-01:2026-03")
+    parser.add_argument("--saida", default="outputs/diagnostico", help="pasta de saída (padrão: outputs/diagnostico)")
+    parser.add_argument("--rotulo", default=None, help="rótulo da execução usado no nome dos arquivos (ex.: 2026-01)")
+    parser.add_argument("--periodo", default=None, help="competência esperada, ex.: 2026-01:2026-03")
     args = parser.parse_args(argv)
 
     payload = executar(Path(args.entrada), Path(args.saida), args.rotulo, args.periodo)
     resumo = payload["resumo"]
-    print(f"Diagnostico v{VERSAO} — {payload['rotulo']}")
+    print(f"Diagnóstico v{VERSAO} — {payload['rotulo']}")
     print(f"  tabelas lidas: {resumo['tabelas_lidas']} | registros: {resumo['registros_lidos']}")
-    print(f"  achados que exigem atencao: {resumo['achados_total']} ({resumo['achados_por_severidade']})")
-    print(f"  itens de perfil/inventario da fonte: {resumo['itens_perfil_fonte']} (nao sao problemas)")
+    print(f"  achados que exigem atenção: {resumo['achados_total']} ({resumo['achados_por_severidade']})")
+    print(f"  itens de perfil/inventário da fonte: {resumo['itens_perfil_fonte']} (não são problemas)")
     print(f"  saida: {Path(args.saida) / ('diagnostico_' + payload['rotulo'])}.md / .json")
-    print("  nenhum registro foi tratado, excluido ou corrigido (diagnostico observacional)")
+    print("  nenhum registro foi tratado, excluído ou corrigido — diagnóstico observacional")
     return 0
 
 
