@@ -13,8 +13,10 @@ Suites:
      partir das CSVs controladas, executa o mesmo entrypoint sobre ela e exige
      resultado identico ao caminho CSV, com o arquivo de entrada intocado.
   3. Textos de apresentacao em pt-BR (titulos e cabecalhos acentuados, nenhuma
-     forma desacentuada nos textos fixos) e decisoes pendentes consolidadas:
-     D-003 e D-006 seguem como dois achados, com uma unica decisao no resumo.
+     forma desacentuada nos textos fixos), mapeamento de apresentacao dos enums
+     (contrato ASCII preservado no JSON, rotulo acentuado no Markdown, coluna de
+     status da evidencia) e decisoes pendentes consolidadas: D-003 e D-006
+     seguem como dois achados, com uma unica decisao no resumo.
   4. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
      nesta versao: nao existe modulo de calculo no repositorio e as formulas
      TRUTH-001..005 seguem pendentes de validacao formal da controladoria
@@ -292,8 +294,8 @@ TITULOS_ACENTUADOS = [
     "## Achados que exigem atenção",
     "## Perfil e inventário da fonte",
     "## Decisões pendentes do negócio",
-    "| Código | Sev. | Classe | Entidade | ID | Descrição | Evidência | Decisão pendente |",
-    "| Código | Classe | Entidade | Item | Descrição | Evidência | Decisão pendente |",
+    "| Código | Sev. | Classe | Entidade | ID | Descrição | Status da evidência | Evidência | Decisão pendente |",
+    "| Código | Classe | Entidade | Item | Descrição | Status da evidência | Evidência | Decisão pendente |",
     "| Relação | Força | Registros | Sem correspondência |",
     "- Período informado:",
     "Distribuição de",
@@ -308,6 +310,20 @@ FORMAS_SEM_ACENTO = [
     "atencao", "inventario", "numerico", "padrao", "competencias",
     "correspondencia", "excluido", "excluidos", "legitimo", "unico",
 ]
+
+# Mapa de apresentação esperado no Markdown (enum tecnico -> rotulo exibido).
+# Declarado aqui de forma independente do modulo sob teste, de proposito.
+ROTULOS_ESPERADOS = {
+    "observado": "Observado",
+    "hipotese": "Hipótese",
+    "obrigatoria": "Obrigatória",
+    "informativa": "Informativa",
+    "COMPLETUDE": "Completude",
+    "CONSISTENCIA": "Consistência",
+    "DUPLICIDADE": "Duplicidade",
+    "FONTE": "Fonte",
+    "RELACIONAMENTO": "Relacionamento",
+}
 
 
 def suite_textos(payload: dict, markdown: str) -> None:
@@ -364,6 +380,58 @@ def suite_textos(payload: dict, markdown: str) -> None:
     # 8. o resumo não repete decisão nenhuma
     pendentes = payload["resumo"]["decisoes_pendentes"]
     checar(len(pendentes) == len(set(pendentes)), "resumo sem decisão repetida")
+
+    # 9. contrato tecnico do JSON preservado: enums seguem ASCII
+    enums_json = ({a["classe"] for a in payload["achados"] + payload["perfil_fonte"]}
+                  | {a["status_evidencia"] for a in payload["achados"] + payload["perfil_fonte"]}
+                  | {r["forca"] for r in payload["relacionamentos"]})
+    fora_do_contrato = sorted(e for e in enums_json if e not in ROTULOS_ESPERADOS)
+    checar(not fora_do_contrato, "JSON preserva os enums tecnicos originais (ASCII)",
+           f"valores inesperados: {fora_do_contrato}")
+    checar(all(e.isascii() for e in enums_json),
+           "nenhum enum do JSON foi acentuado", f"enums: {sorted(enums_json)}")
+
+    # 10. mapeamento aplicado no Markdown: rotulo presente, enum cru ausente
+    faltando_rotulo = sorted(ROTULOS_ESPERADOS[e] for e in enums_json
+                             if ROTULOS_ESPERADOS[e] not in markdown)
+    checar(not faltando_rotulo, "Markdown exibe o rotulo de cada enum presente na saida",
+           f"rotulos ausentes: {faltando_rotulo}")
+    # A varredura por enum cru cobre so os enums em CAIXA ALTA (classes): os
+    # enums minusculos ("observado", "obrigatoria") coincidem com palavras
+    # comuns do texto corrido, e verificar a ausencia deles daria falso
+    # positivo. Para esses, a garantia vem das verificacoes 11 e 12, que
+    # conferem o rotulo na coluna certa de cada linha.
+    crus_no_markdown = sorted(e for e in enums_json
+                              if e.isupper() and re.search(rf"\b{re.escape(e)}\b", markdown))
+    checar(not crus_no_markdown, "Markdown nao expoe classe tecnica crua",
+           f"classes cruas no relatorio: {crus_no_markdown}")
+
+    # 11. coluna de status da evidencia preenchida em toda linha de achado
+    for item in payload["achados"] + payload["perfil_fonte"]:
+        esperado = f"| {ROTULOS_ESPERADOS[item['status_evidencia']]} |"
+        if esperado not in markdown:
+            checar(False, f"coluna de status da evidencia visivel em {item['codigo']}",
+                   f"esperado {esperado}")
+            break
+    else:
+        checar(True, "coluna de status da evidencia visivel em todos os itens")
+
+    # 12. D-006 especificamente: hipotese no JSON, Hipotese no Markdown
+    d006 = [a for a in payload["achados"]
+            if a["classe"] == "RELACIONAMENTO" and a["status_evidencia"] == "hipotese"]
+    checar(len(d006) == 1 and d006[0]["codigo"] == "D-006",
+           "D-006 e o unico achado com status_evidencia 'hipotese' no JSON",
+           f"encontrados: {[(a['codigo'], a['status_evidencia']) for a in d006]}")
+    if d006:
+        linha = [l for l in markdown.splitlines() if l.startswith(f"| {d006[0]['codigo']} |")]
+        checar(len(linha) == 1 and "| Hipótese |" in linha[0],
+               "linha de D-006 no Markdown traz 'Hipótese' na coluna de status",
+               f"linha: {linha}")
+        outros = [a["codigo"] for a in payload["achados"] if a["codigo"] != "D-006"]
+        linhas_outros = [l for l in markdown.splitlines()
+                         if any(l.startswith(f"| {c} |") for c in outros)]
+        checar(all("| Observado |" in l for l in linhas_outros),
+               "todos os demais achados aparecem como 'Observado' no Markdown")
 
 
 def suite_margens() -> None:
