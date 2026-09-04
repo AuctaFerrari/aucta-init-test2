@@ -9,12 +9,16 @@ Suites:
      chaves sem correspondencia recomputadas aqui; cobertura das excecoes
      conhecidas (tests/fixtures/expected_exceptions.csv); prova de que nada foi
      tratado; determinismo das saidas; integridade do arquivo de origem.
-  2. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
+  2. Caminho .xlsx (entrada principal de producao) — gera a fixture .xlsx a
+     partir das CSVs controladas, executa o mesmo entrypoint sobre ela e exige
+     resultado identico ao caminho CSV, com o arquivo de entrada intocado.
+  3. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
      nesta versao: nao existe modulo de calculo no repositorio e as formulas
      TRUTH-001..005 seguem pendentes de validacao formal da controladoria
      (gate do primeiro /change-number). A suite FALHA de proposito se aparecer
-     em `src/` qualquer modulo fora da lista observacional — assim o gate de
-     tier 2 nao pode ser atravessado sem golden.
+     em `src/` qualquer modulo fora da lista observacional. ATENCAO: essa
+     verificacao e uma lista de nomes de arquivo, nao uma analise de
+     comportamento — limitacao registrada em .project/KNOWN_ISSUES.md (KI-001).
 
 Uso: python tests/golden/run_golden.py
 """
@@ -34,7 +38,19 @@ FIXTURES = RAIZ / "tests" / "fixtures"
 SRC = RAIZ / "src"
 
 # Modulos observacionais conhecidos (nao produzem numero entregue ao cliente).
+# LIMITACAO CONHECIDA: e uma lista de NOMES, nao uma verificacao de
+# comportamento. Ver .project/KNOWN_ISSUES.md (KI-001) e a demanda aberta no
+# aucta-dev-core. Nao corrigir aqui: correcao estrutural e demanda separada.
 MODULOS_OBSERVACIONAIS = {"diagnostico_fonte.py"}
+
+# Abas correspondentes a cada CSV de fixture (usado para gerar a fixture .xlsx).
+CONTRATO_ABAS = {
+    "clientes": "Clientes",
+    "vendas": "Vendas",
+    "custos_logisticos": "Custos_Logisticos",
+    "visitas": "Visitas",
+    "parametros": "Parametros",
+}
 
 falhas: list[str] = []
 
@@ -56,21 +72,22 @@ def sha256(caminho: Path) -> str:
     return hashlib.sha256(caminho.read_bytes()).hexdigest()
 
 
-def rodar_diagnostico(saida: Path) -> dict:
+def rodar_diagnostico(saida: Path, entrada: Path = FIXTURES, rotulo: str = "harness") -> dict:
+    """Executa o MESMO entrypoint de producao (src/diagnostico_fonte.py)."""
     resultado = subprocess.run(
         [sys.executable, str(SRC / "diagnostico_fonte.py"),
-         "--entrada", str(FIXTURES), "--saida", str(saida),
-         "--rotulo", "harness", "--periodo", "2026-01:2026-03"],
+         "--entrada", str(entrada), "--saida", str(saida),
+         "--rotulo", rotulo, "--periodo", "2026-01:2026-03"],
         cwd=RAIZ, capture_output=True, text=True,
     )
     if resultado.returncode != 0:
         print(resultado.stdout)
         print(resultado.stderr)
         raise SystemExit("FALHA: diagnostico terminou com erro")
-    return json.loads((saida / "diagnostico_harness.json").read_text(encoding="utf-8"))
+    return json.loads((saida / f"diagnostico_{rotulo}.json").read_text(encoding="utf-8"))
 
 
-def suite_diagnostico() -> None:
+def suite_diagnostico() -> dict:
     print("== Suite 1: diagnostico da fonte (observacional) ==")
 
     hashes_antes = {p.name: sha256(p) for p in sorted(FIXTURES.glob("*.csv"))}
@@ -125,12 +142,27 @@ def suite_diagnostico() -> None:
     checar(orfaos_ind == orfaos_diag, "chaves de cliente sem correspondencia em vendas",
            f"{orfaos_ind} != {orfaos_diag}")
 
-    # 8. cobertura das excecoes conhecidas (referencia aprovada na iniciacao)
-    texto_achados = json.dumps(payload["achados"], ensure_ascii=False)
+    # 8. cobertura das excecoes conhecidas (referencia aprovada na iniciacao).
+    #    Procura nas DUAS listas: atencao (achados) e perfil/inventario.
+    texto_saida = json.dumps([payload["achados"], payload["perfil_fonte"]], ensure_ascii=False)
     nao_cobertas = [linha["id"] for linha in ler("expected_exceptions.csv")
-                    if linha["id"] not in texto_achados]
+                    if linha["id"] not in texto_saida]
     checar(not nao_cobertas, "toda excecao conhecida (EX-01..07) aparece no diagnostico",
            f"ausentes: {nao_cobertas}")
+
+    # 8b. separacao exigida pelo consultor: inventario de status nao infla a
+    #     contagem de problemas; atencao = anomalia/aviso, perfil = informativo
+    checar(all(a["severidade"] in ("anomalia", "aviso") for a in payload["achados"]),
+           "lista de atencao contem apenas anomalia e aviso")
+    checar(all(a["severidade"] == "informativo" for a in payload["perfil_fonte"]),
+           "lista de perfil da fonte contem apenas itens informativos")
+    checar(payload["resumo"]["achados_total"] == len(payload["achados"])
+           and payload["resumo"]["itens_perfil_fonte"] == len(payload["perfil_fonte"]),
+           "contadores do resumo separam atencao e perfil")
+    codigos = [a["codigo"] for a in payload["achados"]] + [a["codigo"] for a in payload["perfil_fonte"]]
+    checar(len(codigos) == len(set(codigos))
+           and all(c.startswith("D-") for c in codigos[:len(payload["achados"])]),
+           "codigos unicos, com prefixo D- para atencao e P- para perfil")
 
     # 9. nenhum indicador de negocio calculado: nem como campo de saida,
     #    nem como classe de achado fora do vocabulario observacional
@@ -152,13 +184,106 @@ def suite_diagnostico() -> None:
            f"campos: {sorted(chaves & proibidos)}")
 
     classes_ok = {"ESQUEMA", "COMPLETUDE", "DUPLICIDADE", "RELACIONAMENTO", "CONSISTENCIA", "FONTE"}
-    classes = {a["classe"] for a in payload["achados"]}
+    classes = {a["classe"] for a in payload["achados"] + payload["perfil_fonte"]}
     checar(classes <= classes_ok, "achados restritos ao vocabulario observacional",
            f"classes inesperadas: {sorted(classes - classes_ok)}")
 
+    return payload
+
+
+def gerar_xlsx(destino: Path) -> Path:
+    """Gera a fixture .xlsx a partir das CSVs controladas, uma aba por arquivo.
+
+    Conteudo deterministico: as celulas saem das mesmas CSVs versionadas, na
+    mesma ordem. Os bytes do arquivo variam entre execucoes (o formato xlsx e
+    um zip com metadados de tempo), por isso a comparacao entre os caminhos e
+    feita pelo CONTEUDO do diagnostico, nunca pelo hash do .xlsx.
+    """
+    from openpyxl import Workbook
+
+    livro = Workbook()
+    livro.remove(livro.active)
+    for nome in ("clientes", "vendas", "custos_logisticos", "visitas", "parametros"):
+        aba = CONTRATO_ABAS[nome]
+        planilha = livro.create_sheet(aba)
+        with (FIXTURES / f"{nome}.csv").open(newline="", encoding="utf-8") as fh:
+            for linha in csv.reader(fh):
+                planilha.append(linha)
+    caminho = destino / "01_Base_Operacional_Fixture.xlsx"
+    livro.save(caminho)
+    return caminho
+
+
+def comparavel(payload: dict) -> dict:
+    """Recorte do diagnostico que deve ser igual nos dois caminhos de entrada.
+
+    Exclui o bloco 'fonte' de cada tabela (nome do arquivo e SHA-256 mudam por
+    construcao) e o bloco 'entrada' (nome e tipo da entrada).
+    """
+    return {
+        "registros_lidos": payload["resumo"]["registros_lidos"],
+        "achados_total": payload["resumo"]["achados_total"],
+        "itens_perfil_fonte": payload["resumo"]["itens_perfil_fonte"],
+        "achados": [(a["classe"], a["entidade"], str(a["id"]), a["severidade"], a["descricao"])
+                    for a in payload["achados"]],
+        "perfil_fonte": [(a["classe"], a["entidade"], str(a["id"]), a["descricao"])
+                         for a in payload["perfil_fonte"]],
+        "relacionamentos": [(r["relacao"], r["sem_correspondencia"]) for r in payload["relacionamentos"]],
+        "tabelas": {n: {k: v for k, v in t.items() if k not in ("fonte", "aba_ou_arquivo")}
+                    for n, t in payload["tabelas"].items()},
+    }
+
+
+def suite_excel(payload_csv: dict) -> None:
+    print("== Suite 2: caminho .xlsx (entrada principal de producao) ==")
+    try:
+        import openpyxl
+    except ImportError:
+        checar(False, "openpyxl disponivel (requirements.txt)",
+               "instale com: python -m pip install --require-hashes -r requirements.txt")
+        return
+    checar(True, f"openpyxl disponivel (versao {openpyxl.__version__})")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        xlsx = gerar_xlsx(base)
+        hash_antes = sha256(xlsx)
+
+        payload_xlsx = rodar_diagnostico(base / "saida_a", entrada=xlsx, rotulo="harness_xlsx")
+        rodar_diagnostico(base / "saida_b", entrada=xlsx, rotulo="harness_xlsx")
+
+        checar(sha256(xlsx) == hash_antes, "arquivo .xlsx de entrada nao foi alterado pela leitura")
+        checar((base / "saida_a" / "diagnostico_harness_xlsx.json").read_bytes()
+               == (base / "saida_b" / "diagnostico_harness_xlsx.json").read_bytes(),
+               "saida deterministica no caminho .xlsx (mesmo arquivo, duas execucoes)")
+
+        esperado, obtido = comparavel(payload_csv), comparavel(payload_xlsx)
+        checar(esperado["registros_lidos"] == obtido["registros_lidos"],
+               "contagens iguais nos dois caminhos",
+               f"{esperado['registros_lidos']} != {obtido['registros_lidos']}")
+        checar(esperado["achados"] == obtido["achados"],
+               "achados de atencao identicos nos dois caminhos",
+               f"csv-so: {sorted(set(esperado['achados']) - set(obtido['achados']))} | "
+               f"xlsx-so: {sorted(set(obtido['achados']) - set(esperado['achados']))}")
+        checar(esperado["perfil_fonte"] == obtido["perfil_fonte"],
+               "perfil da fonte identico nos dois caminhos")
+        checar(esperado["relacionamentos"] == obtido["relacionamentos"],
+               "relacionamentos identicos nos dois caminhos")
+        checar(esperado["tabelas"] == obtido["tabelas"],
+               "esquema, tipos e perfis de coluna identicos nos dois caminhos")
+        checar(payload_xlsx["entrada"]["tipo"] == "planilha Excel",
+               "diagnostico registra a entrada como planilha Excel")
+        for nome, tabela in payload_xlsx["tabelas"].items():
+            if not tabela["fonte"].get("origem", "").endswith(f"::{CONTRATO_ABAS[nome]}"):
+                checar(False, f"origem da tabela {nome} aponta para a aba lida",
+                       tabela["fonte"].get("origem"))
+                break
+        else:
+            checar(True, "origem de cada tabela aponta para a aba lida no arquivo")
+
 
 def suite_margens() -> None:
-    print("== Suite 2: margens / golden cases (GC-01..03) ==")
+    print("== Suite 3: margens / golden cases (GC-01..03) ==")
     modulos = sorted(p.name for p in SRC.glob("*.py")) if SRC.exists() else []
     fora_da_lista = [m for m in modulos if m not in MODULOS_OBSERVACIONAIS]
     if fora_da_lista:
@@ -174,7 +299,8 @@ def suite_margens() -> None:
 
 def main() -> int:
     print(f"Harness de conferencia — repo {RAIZ.name}")
-    suite_diagnostico()
+    payload_csv = suite_diagnostico()
+    suite_excel(payload_csv)
     suite_margens()
     if falhas:
         print(f"\nRESULTADO: {len(falhas)} falha(s) — {falhas}")
