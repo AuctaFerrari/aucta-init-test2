@@ -19,7 +19,9 @@ inventario de status nao infla a contagem de problemas.
 Textos exibidos ao usuario (titulos, descricoes, decisoes e mensagens) usam
 pt-BR acentuado em UTF-8. Chaves do JSON e valores de enumeracao (classe,
 severidade, status_evidencia, forca) seguem ASCII de proposito: sao rotulos
-tecnicos usados em comparacoes e filtros, nao texto de leitura.
+tecnicos usados em comparacoes e filtros, nao texto de leitura. O Markdown
+exibe esses enums pelo mapa ROTULOS_APRESENTACAO (COMPLETUDE -> Completude,
+hipotese -> Hipotese etc.); o valor gravado no JSON nao muda.
 
 Saidas deterministicas: mesmas entradas produzem bytes identicos (nao ha
 carimbo de tempo no conteudo; a auditoria se faz pelo SHA-256 das entradas).
@@ -119,6 +121,32 @@ RELACIONAMENTOS = [
 # preservados separadamente, mas apontam para a MESMA decisão de negócio.
 # Usar a mesma formulação canônica evita duplicidade no resumo consolidado.
 DECISAO_NORMALIZACAO_IDS = ("O negócio aprova a regra de normalização de identificadores antes de qualquer cruzamento")
+
+# Mapeamento de APRESENTAÇÃO: enum técnico -> rótulo exibido no Markdown.
+# Os valores técnicos (chaves deste dicionário) são os que ficam gravados no
+# JSON e usados por testes, comparações e filtros — não mudam. Este mapa só
+# afeta o relatório legível pelo negócio.
+ROTULOS_APRESENTACAO = {
+    # status_evidencia
+    "observado": "Observado",
+    "hipotese": "Hipótese",
+    # forca dos relacionamentos
+    "obrigatoria": "Obrigatória",
+    "informativa": "Informativa",
+    # classe do achado
+    "ESQUEMA": "Esquema",
+    "COMPLETUDE": "Completude",
+    "CONSISTENCIA": "Consistência",
+    "DUPLICIDADE": "Duplicidade",
+    "FONTE": "Fonte",
+    "RELACIONAMENTO": "Relacionamento",
+}
+
+
+def rotulo(valor: str) -> str:
+    """Rótulo de apresentação de um enum técnico; devolve o valor se não houver."""
+    return ROTULOS_APRESENTACAO.get(valor, valor)
+
 
 RE_INTEIRO = re.compile(r"^-?\d+$")
 RE_DECIMAL = re.compile(r"^-?\d+[.,]\d+$")
@@ -585,7 +613,7 @@ def analisar_periodo(tabelas: dict, periodo: str | None) -> list:
 ORDEM_SEVERIDADE = {"anomalia": 0, "aviso": 1, "informativo": 2}
 
 
-def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo, achados_iniciais=()):
+def montar_payload(rotulo_execucao, entrada, tipo_entrada, fontes, tabelas, periodo, achados_iniciais=()):
     resumos, achados = {}, list(achados_iniciais)
     for nome in sorted(tabelas):
         resumo, achados_tabela = analisar_tabela(nome, tabelas[nome])
@@ -618,7 +646,7 @@ def montar_payload(rotulo, entrada, tipo_entrada, fontes, tabelas, periodo, acha
     return {
         "versao_diagnostico": VERSAO,
         "natureza": "observacional — nenhuma regra de tratamento aplicada, nenhum indicador calculado",
-        "rotulo": rotulo,
+        "rotulo": rotulo_execucao,
         "entrada": {"nome": Path(entrada).name, "tipo": tipo_entrada, "periodo_informado": periodo},
         "tabelas": resumos,
         "relacionamentos": relacionamentos,
@@ -664,7 +692,7 @@ def render_markdown(payload: dict) -> str:
         f"- Tabelas lidas: **{resumo['tabelas_lidas']}**",
         f"- Achados que exigem atenção: **{resumo['achados_total']}** — "
         + (", ".join(f"{k}: {v}" for k, v in resumo["achados_por_severidade"].items()) or "nenhum"),
-        f"- Por classe: " + (", ".join(f"{k}: {v}" for k, v in resumo["achados_por_classe"].items()) or "—"),
+        f"- Por classe: " + (", ".join(f"{rotulo(k)}: {v}" for k, v in resumo["achados_por_classe"].items()) or "—"),
         f"- Itens de perfil/inventário da fonte (sem juízo, não são problemas): **{resumo['itens_perfil_fonte']}**",
         "",
         "## Esquema descoberto",
@@ -690,38 +718,40 @@ def render_markdown(payload: dict) -> str:
 
     linhas += ["## Relacionamentos", "", "| Relação | Força | Registros | Sem correspondência |", "| --- | --- | --- | --- |"]
     for rel in payload["relacionamentos"]:
-        linhas.append(f"| `{rel['relacao']}` | {rel['forca']} | {rel['registros_origem']} | {rel['sem_correspondencia']} |")
+        linhas.append(f"| `{rel['relacao']}` | {rotulo(rel['forca'])} | {rel['registros_origem']} | {rel['sem_correspondencia']} |")
 
     linhas += ["", "## Achados que exigem atenção", "",
                "Anomalias e avisos: algo contradiz a estrutura esperada, impede um cruzamento confiável "
                "ou precisa de confirmação antes de virar número. Nenhum deles é regra aprovada.",
                "",
-               "| Código | Sev. | Classe | Entidade | ID | Descrição | Evidência | Decisão pendente |",
-               "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+               "| Código | Sev. | Classe | Entidade | ID | Descrição | Status da evidência | Evidência | Decisão pendente |",
+               "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     if payload["achados"]:
         for a in payload["achados"]:
             linhas.append(
-                f"| {a['codigo']} | {a['severidade']} | {a['classe']} | {a['entidade']} | {a['id']} | "
-                f"{a['descricao']} | {a['evidencia'] or '—'} | {a['decisao_pendente']} |"
+                f"| {a['codigo']} | {a['severidade']} | {rotulo(a['classe'])} | {a['entidade']} | {a['id']} | "
+                f"{a['descricao']} | {rotulo(a['status_evidencia'])} | {a['evidencia'] or '—'} | "
+                f"{a['decisao_pendente']} |"
             )
     else:
-        linhas.append("| — | — | — | — | — | nenhum achado de atenção nesta execução | — | — |")
+        linhas.append("| — | — | — | — | — | nenhum achado de atenção nesta execução | — | — | — |")
 
     linhas += ["", "## Perfil e inventário da fonte", "",
                "Retrato da fonte, sem juízo: **não são problemas** e não entram na contagem de achados. "
                "Servem para o negócio ver o que a base contém (inventário de status, competências, "
                "colunas com vazios legítimos).",
                "",
-               "| Código | Classe | Entidade | Item | Descrição | Evidência | Decisão pendente |",
-               "| --- | --- | --- | --- | --- | --- | --- |"]
+               "| Código | Classe | Entidade | Item | Descrição | Status da evidência | Evidência | Decisão pendente |",
+               "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     if payload["perfil_fonte"]:
         for a in payload["perfil_fonte"]:
             linhas.append(
-                f"| {a['codigo']} | {a['classe']} | {a['entidade']} | {a['id']} | "
-                f"{a['descricao']} | {a['evidencia'] or '—'} | {a['decisao_pendente']} |"
+                f"| {a['codigo']} | {rotulo(a['classe'])} | {a['entidade']} | {a['id']} | "
+                f"{a['descricao']} | {rotulo(a['status_evidencia'])} | {a['evidencia'] or '—'} | "
+                f"{a['decisao_pendente']} |"
             )
     else:
-        linhas.append("| — | — | — | — | nenhum item de perfil nesta execução | — | — |")
+        linhas.append("| — | — | — | — | nenhum item de perfil nesta execução | — | — | — |")
 
     if resumo["decisoes_pendentes"]:
         linhas += ["", "## Decisões pendentes do negócio", "",
@@ -736,7 +766,7 @@ def render_markdown(payload: dict) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-def executar(entrada: Path, saida: Path, rotulo: str | None, periodo: str | None) -> dict:
+def executar(entrada: Path, saida: Path, rotulo_execucao: str | None, periodo: str | None) -> dict:
     if entrada.is_dir():
         tabelas, fontes, achados_leitura = ler_csvs(entrada)
         tipo = "pasta com CSVs (uma por aba)"
@@ -748,7 +778,7 @@ def executar(entrada: Path, saida: Path, rotulo: str | None, periodo: str | None
     if not tabelas:
         raise SystemExit("ERRO: nenhuma tabela do contrato foi encontrada na entrada.")
 
-    payload = montar_payload(rotulo or entrada.stem, entrada, tipo, fontes, tabelas, periodo,
+    payload = montar_payload(rotulo_execucao or entrada.stem, entrada, tipo, fontes, tabelas, periodo,
                              achados_iniciais=achados_leitura)
 
     saida.mkdir(parents=True, exist_ok=True)
