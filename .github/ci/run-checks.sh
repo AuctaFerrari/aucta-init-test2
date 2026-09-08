@@ -112,4 +112,14 @@ if [ -d src ]; then
   fi
 fi
 
+echo "== 4f. Conferência da fase 6 — reconciliação e relatório =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase6.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase6.py || { echo "FALHA: conferência da fase 6 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase6.py ausente — a fase 6 está registrada no plano"
+    fail=1
+  fi
+fi
+
 exit $fail
