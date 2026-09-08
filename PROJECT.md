@@ -37,7 +37,7 @@ Programa local em **Python**, executado pelo analista (duplo clique/comando úni
 
 ## Estado atual
 
-Iniciação concluída com Definition of Ready **segmentado** por fase (ver `.project/init-state.md`). **Fase 1 em andamento, com a primeira entrega mesclada:** o comando de diagnóstico de qualidade da fonte (`src/diagnostico_fonte.py`), observacional, está na `main` desde o merge do PR #8 (merge commit `7a9b2085dcc6d7b0e9d72f22f4a72a6cc8398e62`, Issue #7 encerrada). O comando descreve a fonte e não trata dados nem calcula indicador.
+Iniciação concluída com Definition of Ready **segmentado** por fase (ver `.project/init-state.md`). O diagnóstico observacional está na `main` desde o PR #8. No ramo `feat/base-tratada-oficial-clean`, as sete fases do tratamento estão concluídas e conferidas: base oficial, exceções, log, reconciliação e veredito por competência, sem cálculo de indicador. O ciclo aguarda revisão em PR.
 
 Cálculo de margens e recomendações seguem bloqueados pelos gates de validação (controladoria e sponsor). Versão continua **em desenvolvimento** — nenhuma release foi executada. 2026-09-08.
 
@@ -58,3 +58,4 @@ Sponsor e aprovadora funcional: Ana Martins (Diretora Comercial). Validador dos 
 | KNOWN_ISSUES.md | .project/ | Limitações conhecidas ainda relevantes |
 | Plano da feature | docs/planos/ | Plano visual faseado de cada mudança |
 | Runbook do diagnóstico | docs/runbook/diagnostico-fonte.md | Como o analista roda o diagnóstico da base do mês |
+| Runbook da base tratada | docs/runbook/base-tratada.md | Como gerar e conferir as sete saídas do tratamento |
