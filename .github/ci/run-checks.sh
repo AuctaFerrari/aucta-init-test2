@@ -90,4 +90,16 @@ else
   echo "ok: sem código sob teste ainda"
 fi
 
+echo "== 4d. Conferência da fase 4 — pedidos que não entram =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase4.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase4.py || { echo "FALHA: conferência da fase 4 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase4.py ausente — a fase 4 está registrada no plano"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
 exit $fail
