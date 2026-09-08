@@ -41,6 +41,14 @@
       "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
       "testes": "tests/golden/run_fase5.py",
       "justificativa": "Fase 5: compoe a populacao oficial de pedidos e classifica visitas, preservando origem e bloqueios. Nao reconcilia e nao calcula indicador."
+    },
+    {
+      "caminho": "src/relatorio_tratamento.py",
+      "categoria": "reconciliacao",
+      "decisao": "DN-10",
+      "golden": "tests/fixtures/golden/base-tratada/reconciliacao.csv",
+      "testes": "tests/golden/run_fase6.py",
+      "justificativa": "Fase 6: materializa as saidas oficiais, prova conservacao em cinco populacoes e emite veredito por competencia. Nao calcula margem ou indicador."
     }
   ]
 }
