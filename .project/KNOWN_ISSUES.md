@@ -25,7 +25,7 @@
 
 **O que a guarda nova NÃO prova.** Que o módulo se comporta conforme a categoria declarada; que não há cálculo embutido; que o golden citado cobre o comportamento relevante; e que a suite citada é rigorosa. Nada disso é verificável por nome de arquivo ou por chave de JSON.
 
-**O que as suites comportamentais cobrem de verdade.** Para o diagnóstico, a suite 1; para a fase 2, `tests/golden/run_fase2.py`, que confere ausência de chave de fase posterior na saída, restrição das regras aplicadas a DN-11 e DN-13, e ausência de menção a campos de fase posterior no código. É o limite de escopo real de cada módulo — não o inventário.
+**O que as suites comportamentais cobrem de verdade.** Para o diagnóstico, a suite 1; para as fases 2–6, `tests/golden/run_fase2.py` a `run_fase6.py`, comparando população, destino, bloqueio, reconciliação e veredito com referências congeladas; para a fase 7, `run_fase7.py`, conferindo determinismo, paridade CSV/Excel, integridade e ausência de indicador na saída. É o limite de escopo real de cada módulo — não o inventário.
 
 **O que a Suite 1 do harness cobre de verdade** (comportamental, mas raso): nenhum campo de saída com nome de indicador; classes de achado restritas ao vocabulário observacional; contagens iguais às cruas; duplicata preservada; hash da origem inalterado; saída determinística. Isso inspeciona o **formato da saída**, não o cálculo — um número calculado emitido sob uma chave de nome neutro, ou embutido no texto de uma descrição, passa.
 
