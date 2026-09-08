@@ -5,7 +5,7 @@ repo: "AuctaFerrari/aucta-init-test2"
 risk_tier: 2
 status_geral: concluida
 iniciado_em: 2026-09-02
-atualizado_em: 2026-09-04
+atualizado_em: 2026-09-08
 ---
 
 # Estado do /init — Aucta Foods — Rentabilidade por Cliente e Cobertura Comercial
@@ -105,5 +105,5 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 ## Retomada
 
 - Iniciação CONCLUÍDA — DoR segmentado: **pronto para a fase 1** (ingestão, validação, normalização, tratamento, relatório de exceções) via /start-work; cálculo definitivo e recomendações têm gates listados em Blockers; release tem gates administrativos.
-- Fase 1 em andamento: PR #8 (diagnóstico observacional da fonte) aberto, aguardando revisão e merge do owner técnico.
-- Próximo passo depois do #8: antes do primeiro /change-number, obter validação formal do Bruno sobre golden + tolerância + regras.
+- Fase 1 em andamento: primeira entrega **mesclada** — PR #8 (diagnóstico observacional da fonte) aprovado pelo owner técnico e mesclado em 2026-09-08 por merge commit `7a9b2085dcc6d7b0e9d72f22f4a72a6cc8398e62`; Issue #7 encerrada como concluída. Smoke test read-only da `main` verde, com a árvore idêntica ao head aprovado `9d57363`.
+- Próximo passo: abrir nova demanda para validação das regras e dos golden cases com o dono do número (Bruno Lima, Controladoria) — gate do primeiro /change-number. As oito decisões pendentes levantadas pelo diagnóstico são a pauta dessa demanda e serão transferidas para a Issue nova quando o /start-work for aberto.
