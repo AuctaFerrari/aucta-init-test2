@@ -334,9 +334,14 @@ def suite_escopo(payload: dict | None) -> None:
     checar(set(payload["regras_aplicadas"]) <= {"TRUTH-011", "DN-04", "DN-14", "DN-11"},
            "apenas TRUTH-011, DN-04, DN-14 e DN-11 aplicadas",
            str(payload["regras_aplicadas"]))
-    modulos = sorted(p.name for p in SRC.rglob("*.py"))
-    checar(modulos == ["diagnostico_fonte.py", "identificadores.py", "versao_pedido.py"],
-           "src/ contem apenas os modulos das fases ja autorizadas", f"modulos: {modulos}")
+    inventario = json.loads(
+        (RAIZ / "project-plugin" / "references" / "modulos.json").read_text(encoding="utf-8")
+    )
+    registrados = sorted(item["caminho"] for item in inventario["modulos"])
+    modulos = sorted(str(p.relative_to(RAIZ)) for p in SRC.rglob("*.py"))
+    checar(modulos == registrados,
+           "src/ contem apenas modulos autorizados no inventario do projeto",
+           f"src: {modulos} | inventario: {registrados}")
     fonte = MODULO.read_text(encoding="utf-8")
     for termo in TERMOS_FORA_DO_CODIGO:
         checar(termo not in fonte,
