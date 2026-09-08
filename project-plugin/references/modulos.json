@@ -1,0 +1,22 @@
+{
+  "descricao": "Inventario dos modulos de src/. Registro no nivel do projeto, lido pela guarda 4 do harness. Modulo nao registrado reprova. Registrar um modulo NAO autoriza modulo de calculo: categorias proibidas sao verificadas no harness e nao podem ser liberadas editando este arquivo.",
+  "limitacao_conhecida": "KI-001 em .project/KNOWN_ISSUES.md: conferir caminho de arquivo nao e verificacao de comportamento. O limite de escopo de cada modulo e sustentado pelas suites comportamentais declaradas em 'testes', nao por este inventario.",
+  "modulos": [
+    {
+      "caminho": "src/diagnostico_fonte.py",
+      "categoria": "observacional",
+      "decisao": "",
+      "golden": "",
+      "testes": "tests/golden/run_golden.py",
+      "justificativa": "Descreve a fonte. Nao trata, nao corrige e nao calcula; suites 1 a 3 do harness conferem que a saida nao tem campo de indicador."
+    },
+    {
+      "caminho": "src/identificadores.py",
+      "categoria": "identificadores",
+      "decisao": "DN-11",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase2.py",
+      "justificativa": "Fase 2 do plano aprovado: normaliza identificador, preserva o bruto e trata colisao conforme DN-11, com DN-13 para competencia inutilizavel. Nao monta base tratada, nao reconcilia e nao calcula."
+    }
+  ]
+}
