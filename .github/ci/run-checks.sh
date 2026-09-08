@@ -122,4 +122,12 @@ if [ -d src ]; then
   fi
 fi
 
+echo "== 4g. Conferência independente da fase 7 =="
+if [ -f tests/golden/run_fase7.py ]; then
+  "$PY_HARNESS" tests/golden/run_fase7.py || { echo "FALHA: conferência independente da fase 7 não passou"; fail=1; }
+else
+  echo "FALHA: tests/golden/run_fase7.py ausente — a fase 7 está registrada no plano"
+  fail=1
+fi
+
 exit $fail
