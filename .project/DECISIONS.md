@@ -10,6 +10,7 @@
 | --- | --- |
 | DN-01 a DN-12, fórmulas, regras, exceções, golden e tolerância | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589411324 |
 | DN-13, ordem de avaliação, comportamento de A5, taxonomia | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589595626 |
+| **DN-14**, `atualizado_em` inutilizável em grupo duplicado | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5590561870 |
 | Invalidação da aprovação anterior (sem efeito) | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589236253 |
 
 Todo item abaixo é **Muda-numero: sim** — decide quais registros e quais valores alimentam o número entregue.
@@ -32,7 +33,7 @@ Artefatos afetados: base tratada, relatório de tratamento (aviso informativo, n
 ## DN-04 · Empate de `atualizado_em`
 
 Se versões duplicadas empatarem no `atualizado_em` mais recente, **todas as versões empatadas vão para quarentena** e a **competência afetada é bloqueada**. Nunca escolher por ordem do arquivo.
-Interage com DN-10 de forma intencional: empate em janeiro torna janeiro `não calcular`, mesmo estando limpo na fixture atual.
+Interage com DN-10 de forma intencional: empate em janeiro torna janeiro `não calcular`, mesmo estando limpo na fixture atual. Situação distinta de DN-14, que trata de timestamp inutilizável.
 
 ## DN-05 · Destino do registro com exceção bloqueante
 
@@ -82,6 +83,19 @@ O status observado na fonte bruta (`Provisório`, em `tests/fixtures/parametros.
 Se `data_pedido` estiver **ausente, vazia, malformada ou de outra forma inutilizável**, o pedido vai para **quarentena**. Como a competência não pode ser determinada com segurança, **todo o período de processamento solicitado é bloqueado**. O registro **nunca** pode ser classificado silenciosamente como fora do período. Artefatos de diagnóstico, quarentena e veredito bloqueado continuam sendo produzidos quando tecnicamente possível, mas **nenhuma saída tratada oficial nem indicador de rentabilidade** pode ser publicado.
 Origem: caso descoberto pela derivação independente, ausente do conjunto aprovado até então, registrado como aberto em vez de resolvido pelo agente.
 
+## DN-14 · `atualizado_em` inutilizável em grupo de pedido duplicado
+
+- Em um grupo de pedido duplicado, se **qualquer** versão candidata tiver `atualizado_em` ausente, vazio, malformado ou de outra forma inutilizável, **nenhuma versão vencedora é escolhida**.
+- **Todas** as versões daquele grupo vão para **quarentena**.
+- **Toda competência representada no grupo** que possa ser determinada com segurança é **bloqueada**.
+- Se **nenhuma** competência afetada puder ser determinada com segurança, **todo o período de processamento solicitado é bloqueado**.
+- O **timestamp inválido** e a **ambiguidade de duplicata** são reportados como **motivos separados**.
+- O grupo **nunca** é resolvido por ordem de arquivo.
+- Para pedido **não duplicado**, `atualizado_em` ausente ou malformado **não remove o pedido por si só** — o campo serve apenas à precedência de versão. O caso é reportado como **aviso de qualidade da fonte, não bloqueante**.
+
+Distinta de DN-04: empate é timestamp válido e repetido; DN-14 é timestamp inutilizável. Distinta de DN-13: DN-13 trata da competência do pedido; DN-14 trata da precedência de versão, e usa o mesmo princípio de delimitação quando a competência do grupo não é determinável.
+Golden que cobre: `tests/fixtures/golden/fase3/` (cenário A6).
+
 ## Ordem de avaliação aprovada
 
 1. Validar se `data_pedido` está presente e é parseável.
@@ -103,11 +117,13 @@ Origem: caso descoberto pela derivação independente, ausente do conjunto aprov
 
 ## GATE-CN-01 · Gate de validação funcional do primeiro `/change-number`
 
-**Status: FECHADO em 2026-09-08.** Fecha somente a **aprovação funcional**. Não torna conforme nenhuma implementação.
+**Status: REABERTO e REFECHADO em 2026-09-08**, com a aprovação de DN-14. Fecha somente a **aprovação funcional**. Não torna conforme nenhuma implementação.
 
-Cobertura exigida para o fechamento, toda satisfeita item a item: TRUTH-001 a TRUTH-005 · DN-01 a **DN-13** · TRUTH-011 a TRUTH-015 · EX-01 a EX-07 · GC-01 a GC-03 · tolerância R$ 0,00 · parâmetros `custo_por_visita_realizada` e `custo_operacional_por_pedido` · política decimal e de arredondamento · escopo de bloqueio · normalização e rastreabilidade · esclarecimentos I-01 a I-04 · ordem de avaliação.
+Cobertura exigida para o fechamento, toda satisfeita item a item: TRUTH-001 a TRUTH-005 · DN-01 a **DN-14** · TRUTH-011 a TRUTH-015 · EX-01 a EX-07 · GC-01 a GC-03 · tolerância R$ 0,00 · parâmetros `custo_por_visita_realizada` e `custo_operacional_por_pedido` · política decimal e de arredondamento · escopo de bloqueio · normalização e rastreabilidade · esclarecimentos I-01 a I-04 · ordem de avaliação.
 
-O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação nominal, individual, do dono do número.
+Fonte do refechamento: `issuecomment-5590561870`.
+
+O gate **reabre** sempre que qualquer regra aprovada mudar ou item novo aparecer: cada item exige aprovação nominal, individual, do dono do número. Foi o que aconteceu com DN-13 (fase 1) e com DN-14 (fase 3).
 
 ## Mapeamento de identificadores antigos
 
@@ -122,7 +138,8 @@ O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação 
 | DEC-07 | DN-06 | — |
 | DEC-08 | **DN-07 + DN-08** | Continha duas escolhas de política independentes, desmembradas |
 | — | DN-09 a DN-13 | Itens novos: arredondamento, escopo de bloqueio, normalização, parâmetro do piloto, competência inutilizável |
+| — | DN-14 | Item novo, aprovado antes da fase 3: timestamp inutilizável em grupo duplicado |
 
 ## Taxonomia
 
-Decidido pelo owner técnico em 2026-09-08: as regras operacionais novas ficam aqui como DN-01 a DN-13; **TRUTH-016 a TRUTH-020 não são criadas nesta recuperação**; apenas os identificadores TRUTH já existentes são refinados. As TRUTH-016..020 gravadas no ramo `feat/base-tratada-oficial` (head `5c02e59`) foram escritas com fonte inválida e **não** correspondem às decisões aprovadas aqui.
+Decidido pelo owner técnico em 2026-09-08: as regras operacionais novas ficam aqui como DN-01 a DN-14; **TRUTH-016 a TRUTH-020 não são criadas nesta recuperação**; apenas os identificadores TRUTH já existentes são refinados. As TRUTH-016..020 gravadas no ramo `feat/base-tratada-oficial` (head `5c02e59`) foram escritas com fonte inválida e **não** correspondem às decisões aprovadas aqui.
