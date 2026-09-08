@@ -1,0 +1,4 @@
+caso_id,competencia,linhas_vendas_origem,pedidos_base_tratada,excecoes_bloqueantes,veredito_esperado,observacao,tolerancia,fonte_do_esperado,data_referencia,validado_por
+VC-01,2026-01,7,5,0,seguro,"2 exclusoes documentadas, nenhuma bloqueante; insumos de GC-01..03 reproduzidos",0,recomputacao independente,2026-09-08,Bruno Lima 2026-09-08 (papel delegado a Caio Ferrari)
+VC-02,2026-02,4,1,3,nao_calcular,3 excecoes bloqueantes; C002 fica com visita e sem pedido; C005 sai do mes,0,recomputacao independente,2026-09-08,Bruno Lima 2026-09-08 (papel delegado a Caio Ferrari)
+VC-03,2026-03,2,2,0,seguro,O012 entra marcado por cliente inativo (DEC-01),0,recomputacao independente,2026-09-08,Bruno Lima 2026-09-08 (papel delegado a Caio Ferrari)
