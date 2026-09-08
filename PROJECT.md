@@ -37,7 +37,9 @@ Programa local em **Python**, executado pelo analista (duplo clique/comando úni
 
 ## Estado atual
 
-Iniciação concluída com Definition of Ready **segmentado** por fase (ver `.project/init-state.md`). Em desenvolvimento da **fase 1** — leitura e entendimento da base. Primeira entrega da fase: comando de diagnóstico de qualidade da fonte (`src/diagnostico_fonte.py`), observacional. Cálculo de margens e recomendações seguem bloqueados pelos gates de validação (controladoria e sponsor). 2026-09-04.
+Iniciação concluída com Definition of Ready **segmentado** por fase (ver `.project/init-state.md`). **Fase 1 em andamento, com a primeira entrega mesclada:** o comando de diagnóstico de qualidade da fonte (`src/diagnostico_fonte.py`), observacional, está na `main` desde o merge do PR #8 (merge commit `7a9b2085dcc6d7b0e9d72f22f4a72a6cc8398e62`, Issue #7 encerrada). O comando descreve a fonte e não trata dados nem calcula indicador.
+
+Cálculo de margens e recomendações seguem bloqueados pelos gates de validação (controladoria e sponsor). Versão continua **em desenvolvimento** — nenhuma release foi executada. 2026-09-08.
 
 ## Owners (resumo)
 
