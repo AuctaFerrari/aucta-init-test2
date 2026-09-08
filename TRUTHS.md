@@ -76,3 +76,28 @@ TRUTH-015 │ Identificadores de cliente são normalizados (maiúsculas, sem esp
 Source: golden cases fornecidos pelo consultor na revisão da iniciação (2026-09-03)
 Owner: Controladoria (Bruno Lima)
 Last reviewed: 2026-09-03
+
+TRUTH-016 │ A base tratada oficial admite pedido apenas por lista branca de status: só `Faturado` entra. `Cancelado` sai por TRUTH-012 (exclusão documentada); qualquer outro status, conhecido ou novo, vai para quarentena com bloqueio de publicação — nunca é incluído por omissão. Registro com exceção bloqueante fica FORA da base tratada, nomeado na quarentena, não marcado dentro dela.
+Source: decisões DEC-06 e DEC-07 registradas na Issue #10 em 2026-09-08; autorizador Caio Ferrari no papel de Bruno Lima, com a limitação declarada em ACCEPTANCE.md
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-08
+
+TRUTH-017 │ A competência (mês) de um pedido é a `data_pedido`, nunca a `atualizado_em`: correção de cadastro feita em mês posterior não move o mês do fato.
+Source: decisão DEC-02 registrada na Issue #10 em 2026-09-08; autorizador Caio Ferrari no papel de Bruno Lima
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-08
+
+TRUTH-018 │ Movimento de cliente com status `Inativo` entra na base tratada, marcado como `cliente_inativo`: o faturamento aconteceu e o custo de servir existiu. A decisão comercial sobre o cliente é separada do tratamento do dado.
+Source: decisão DEC-01 registrada na Issue #10 em 2026-09-08; autorizador Caio Ferrari no papel de Bruno Lima
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-08
+
+TRUTH-019 │ `custo_manuseio` igual a 0 é valor legítimo da fonte, não ausência de dado: o custo logístico de GC-01 (130 = frete 80 + 50) confirma que a coluna não é usada no piloto. Zero não vira nulo nem é imputado.
+Source: decisão DEC-03 registrada na Issue #10 em 2026-09-08, conferida contra os golden cases GC-01..03; autorizador Caio Ferrari no papel de Bruno Lima
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-08
+
+TRUTH-020 │ Empate de `atualizado_em` entre duas versões do mesmo pedido: todas as versões vão para quarentena com bloqueio de publicação. A versão vigente nunca é escolhida por ordem de leitura do arquivo.
+Source: decisão DEC-04 registrada na Issue #10 em 2026-09-08; autorizador Caio Ferrari no papel de Bruno Lima
+Owner: Controladoria (Bruno Lima)
+Last reviewed: 2026-09-08
