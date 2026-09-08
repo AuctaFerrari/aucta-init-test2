@@ -45,9 +45,9 @@ As entradas adversariais vivem em `tests/fixtures/adversarial/<cenario>/`, como 
 
 EX-01..07: dedupe O006 (fica custo 260), exclusão O005, normalização `" c003 "`, órfão O010/C999, nulos O008/O009, visita V008 sem data. **EX-04, EX-05 e EX-06 bloqueiam a competência afetada** (fev/2026), não o relatório inteiro — escopo de DN-10.
 
-## Harness (`tests/golden/run_golden.py`)
+## Harness e suites faseadas
 
-Estado atual do ramo, herdado do ciclo 1, com quatro suites e **46 verificações** na `main`:
+O harness base mantém as quatro suites do ciclo 1. As guardas 4b–4g do CI executam as suites faseadas:
 
 **Suite 1 — Diagnóstico da fonte (observacional).** Recomputa contagens, vazios, duplicados e chaves sem correspondência; confere cobertura de EX-01..07; prova que nada foi tratado; determinismo e integridade da origem; nenhum campo de indicador na saída.
 
@@ -55,9 +55,16 @@ Estado atual do ramo, herdado do ciclo 1, com quatro suites e **46 verificaçõe
 
 **Suite 3 — Textos de apresentação em pt-BR** e decisões pendentes consolidadas.
 
-**Suite 4 — Margens / golden cases: PENDENTE.** Não implementada enquanto não existir módulo de cálculo. A suite **falha de propósito** se aparecer em `src/` qualquer módulo fora da lista observacional declarada no harness. Essa guarda é **lista de nomes de arquivo, não verificação de comportamento** — limitação registrada em `.project/KNOWN_ISSUES.md` (KI-001); o gate real do trabalho que produz número é o `/change-number`.
+**Suite 4 — Inventário de módulos.** Compara todo `src/` com `project-plugin/references/modulos.json`, recusa categorias de cálculo e exige decisão, golden e suite para módulo não observacional. A limitação comportamental permanece em KI-001.
 
-**A ser construído na fase 2**, sem enfraquecer nenhuma guarda existente: suites do tratamento comparando a saída com `populacao.csv`, `reconciliacao.csv` e `veredito.csv` por recomputação independente; suite do caminho `.xlsx` para o tratamento; suite de derivabilidade dos insumos de GC-01..03 a partir da base tratada, com a conta feita na suite e nunca em `src/`; e as provas negativas de cada regra.
+- `run_fase2.py`: normalização e colisões.
+- `run_fase3.py`: versão vigente, empate e timestamp inutilizável.
+- `run_fase4.py`: classificação dos pedidos que não entram.
+- `run_fase5.py`: população completa de pedidos e visitas contra os 147 casos.
+- `run_fase6.py`: reconciliação e veredito contra 54 + 18 referências.
+- `run_fase7.py`: determinismo, paridade CSV/Excel, integridade, diagnóstico inalterado e derivabilidade dos GC-01..03 por caminho independente.
+
+A suite de cálculo de margens permanece fora deste ciclo: os GC são apenas recomputados dentro da conferência independente para provar que os insumos da base tratada sustentam os valores aprovados.
 
 ## Demais camadas
 
