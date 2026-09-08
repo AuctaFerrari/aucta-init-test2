@@ -211,11 +211,19 @@ def suite_escopo(payload: dict | None) -> None:
     checar(set(payload["regras_aplicadas"]) <= {"DN-11", "DN-13"},
            "apenas DN-11 e DN-13 aplicadas nesta fase",
            str(payload["regras_aplicadas"]))
-    # nenhum modulo de fase posterior foi criado junto
-    modulos = sorted(p.name for p in SRC.rglob("*.py"))
-    checar(modulos == ["diagnostico_fonte.py", "identificadores.py"],
-           "src/ contem apenas o modulo observacional e o da fase 2",
-           f"modulos: {modulos}")
+    # nenhum modulo nao declarado foi criado junto. A lista exaustiva do que deve
+    # existir vive na suite da fase MAIS RECENTE (a que sabe o estado corrente);
+    # aqui a exigencia e que todo modulo de src/ esteja no inventario do projeto
+    # e que o modulo desta fase seja um deles.
+    inventario = json.loads(
+        (RAIZ / "project-plugin" / "references" / "modulos.json").read_text(encoding="utf-8"))
+    declarados = {item["caminho"] for item in inventario["modulos"]}
+    modulos = sorted(str(p.relative_to(RAIZ)) for p in SRC.rglob("*.py"))
+    checar(set(modulos) <= declarados,
+           "todo modulo de src/ esta declarado no inventario do projeto",
+           f"nao declarados: {sorted(set(modulos) - declarados)}")
+    checar("src/identificadores.py" in modulos,
+           "o modulo da fase 2 esta presente em src/", f"modulos: {modulos}")
     fonte = MODULO.read_text(encoding="utf-8")
     for termo in ("atualizado_em", "Cancelado", "receita_bruta", "custo_produto"):
         checar(termo not in fonte,
