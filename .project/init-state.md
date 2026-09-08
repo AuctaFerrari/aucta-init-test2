@@ -37,7 +37,7 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | I. Ambientes e acessos | concluida | GitHub ok; pasta local conectada em 2026-09-02 |
 | J. Repositório e governança | concluida | init-repo: itens 1–10 fechados (item 3 baseline n/a — sem código pré-existente; item 7 quadro adiado) |
 | K. Estratégia de testes | concluida | tests/TEST_STRATEGY.md + golden materializados (GC-01..03, tolerância R$ 0,00) + exceções (EX-01..07) + golden do tratamento (BASE e A1–A5) |
-| L. Conhecimento canônico | concluida | TRUTHS.md (15 verdades), GLOSSARY.md (10 termos), DECISIONS.md (DN-01..DN-13), PARAMETERS.md |
+| L. Conhecimento canônico | concluida | TRUTHS.md (15 verdades), GLOSSARY.md (10 termos), DECISIONS.md (DN-01..DN-14), PARAMETERS.md |
 | M. Plugin e skill stack | concluida | init-plugin: 6 skills + camada karpathy (pendente vendorização, fallback embutido); 7 workflows parametrizados |
 | N. Release e sustentação | concluida | analista opera, Aucta dá suporte; aceite por e-mail; backup por release em backups/ no OneDrive |
 | O. Baseline | concluida | não há código pré-existente; baseline = estado do template (sem tag necessária) |
@@ -75,7 +75,7 @@ O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação 
 
 **DoR segmentado — situação em 2026-09-08:**
 
-- ✅ **Gate do primeiro /change-number: FECHADO** — validação funcional de GC-01..03, tolerância R$ 0,00, regras TRUTH-011..015 e decisões DN-01..DN-13 registrada item a item (GATE-CN-01 acima).
+- ✅ **Gate do primeiro /change-number: FECHADO** — validação funcional de GC-01..03, tolerância R$ 0,00, regras TRUTH-011..015 e decisões DN-01..DN-14 registrada item a item (GATE-CN-01 acima).
 - ⛔ **Gate para classificação/recomendações (clientes-alerta):** parâmetro `limiar_margem_servir_baixa` (0,05) validado por Ana Martins. Registrado com status negativo explícito em `.project/PARAMETERS.md`. NÃO bloqueia ingestão, tratamento e relatório de exceções.
 - ⛔ **Gates para a primeira release:** analista operador nomeado + contatos de Ana e Bruno em OWNERS.md; pasta `backups/` criada no OneDrive do projeto; e-mail de aceite operante.
 - ✅ **Sem bloqueio:** fase 1 — leitura, validação, normalização, tratamento e relatório de exceções.
@@ -89,7 +89,7 @@ O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação 
 - **Preservado** como evidência forense: sem delete, sem rebase, sem force-push, sem amend.
 - **Não retroativamente conforme** e **inelegível para PR e merge.**
 - **Proibido como fonte de implementação.** Nada dele foi lido, copiado, diferenciado, cherry-picked, importado ou adaptado na recuperação.
-- As TRUTH-016..020 gravadas nesse ramo **não** são as decisões aprovadas: numeração antiga e fonte inválida. A taxonomia decidida usa DN-01..DN-13 em `.project/DECISIONS.md`, sem criar TRUTH nova.
+- As TRUTH-016..020 gravadas nesse ramo **não** são as decisões aprovadas: numeração antiga e fonte inválida. A taxonomia decidida usa DN-01..DN-14 em `.project/DECISIONS.md`, sem criar TRUTH nova.
 
 ### Ramo limpo
 
@@ -232,8 +232,17 @@ Registro formal único da recuperação do checkpoint de documentação da fase 
 ## Retomada
 
 - Iniciação CONCLUÍDA. **GATE-CN-01 fechado**: as regras, os golden e a tolerância do tratamento e do cálculo têm aprovação funcional registrada.
-- Fases 1, 2 e 3 do ciclo da base tratada **concluídas** no ramo `feat/base-tratada-oficial-clean`: governança materializada, golden derivados de forma independente antes de qualquer código, identificadores padronizados e versão que vale de cada pedido, cada fase com conferência própria e guarda no CI.
+- Fases 1 a 7 do ciclo da base tratada **concluídas** no ramo `feat/base-tratada-oficial-clean`: golden antes do código; identificadores; versão vigente; pedidos que não entram; base oficial e visitas; reconciliação e relatório; conferência independente.
 - **`GATE-CN-01` FECHADO até DN-14.** A única decisão de negócio nova da fase 3 foi DN-14, aprovada antes do código.
-- **Próximo passo, aguardando autorização explícita: fase 4 do plano** — pedidos que não entram (exclusão documentada por situação e quarentena por informação faltante, TRUTH-012 com DN-05, DN-06, DN-08 e DN-13). **Não iniciada.** Nada pode ser reaproveitado do ramo contaminado, que segue em `5c02e59` como evidência forense, não conforme e inelegível para PR e merge.
-- Bloqueadores antes da fase 4: nenhum de negócio. Restam os gates de recomendação (Ana Martins) e de release, que não bloqueiam a fase 4.
-- Nenhum PR foi aberto em nenhum momento deste ciclo.
+- Resultado BASE: 8 pedidos tratados, 2 excluídos, 3 em quarentena; 9 visitas válidas; janeiro e março publicáveis, fevereiro bloqueado. As 54 linhas de reconciliação fecham em zero.
+- **Próximo passo:** abrir o PR do ciclo e obter a aprovação final exigida pelo D9 antes do merge. O ramo contaminado segue em `5c02e59` como evidência forense e inelegível para PR e merge.
+- Restam os gates de recomendação (Ana Martins) e de release; eles não bloqueiam a revisão da base tratada.
+
+### EF-005 · Leitura indevida do ramo forense durante a auditoria da fase 4
+
+- **Exigência violada:** `project-plugin/references/pointers.md` determinava que o ramo `feat/base-tratada-oficial` não fosse lido, copiado, diferenciado, importado ou adaptado.
+- **Ação tomada:** antes de implementar a fase 4, o agente Codex executou leitura de `src/base_tratada.py` e de trechos do harness daquele ramo para compreender o histórico.
+- **Impacto:** a afirmação anterior de que o ramo contaminado nunca foi lido deixou de ser verdadeira. Nenhum arquivo daquele ramo foi cherry-picked, copiado ou mesclado. O código novo foi escrito contra `.project/DECISIONS.md` e os golden do ramo limpo e foi conferido pelas suites próprias.
+- **Recuperação:** a procedência foi corrigida no plano e este desvio é declarado no PR. O ramo contaminado permanece inalterado e inelegível para merge.
+- **Autorização:** não houve autorização prévia para a leitura. O registro não a legitima retroativamente.
+- **Validade e precedente:** exclusivamente este evento; precedente nenhum.
