@@ -33,6 +33,14 @@
       "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
       "testes": "tests/golden/run_fase4.py",
       "justificativa": "Fase 4: classifica cada pedido entre candidato a base tratada, exclusao documentada, quarentena e fora do periodo. Nao classifica visitas, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/base_tratada.py",
+      "categoria": "base_tratada",
+      "decisao": "DN-07",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase5.py",
+      "justificativa": "Fase 5: compoe a populacao oficial de pedidos e classifica visitas, preservando origem e bloqueios. Nao reconcilia e nao calcula indicador."
     }
   ]
 }
