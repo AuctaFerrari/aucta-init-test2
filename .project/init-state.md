@@ -10,7 +10,7 @@ atualizado_em: 2026-09-08
 
 # Estado do /init — Aucta Foods — Rentabilidade por Cliente e Cobertura Comercial
 
-Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: respostas e decisões vivem nos artefatos canônicos (PROJECT.md, TRUTHS.md, GLOSSARY.md, ACCEPTANCE.md, OWNERS.md, DATA_CATALOG.md). Atualizado e commitado pelo agente a cada avanço material.
+Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: respostas e decisões vivem nos artefatos canônicos (PROJECT.md, TRUTHS.md, GLOSSARY.md, ACCEPTANCE.md, OWNERS.md, DATA_CATALOG.md, DECISIONS.md, PARAMETERS.md). Atualizado e commitado pelo agente a cada avanço material.
 
 ## Sub-skills
 
@@ -36,8 +36,8 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 | H. Arquitetura inicial | concluida | PROJECT.md (programa local Python, Windows) |
 | I. Ambientes e acessos | concluida | GitHub ok; pasta local conectada em 2026-09-02 |
 | J. Repositório e governança | concluida | init-repo: itens 1–10 fechados (item 3 baseline n/a — sem código pré-existente; item 7 quadro adiado) |
-| K. Estratégia de testes | concluida | tests/TEST_STRATEGY.md + golden materializados (GC-01..03, tolerância R$ 0,00) + exceções (EX-01..07) |
-| L. Conhecimento canônico | concluida | TRUTHS.md (15 verdades, incl. regras de tratamento 011..015), GLOSSARY.md (10 termos) |
+| K. Estratégia de testes | concluida | tests/TEST_STRATEGY.md + golden materializados (GC-01..03, tolerância R$ 0,00) + exceções (EX-01..07) + golden do tratamento (BASE e A1–A5) |
+| L. Conhecimento canônico | concluida | TRUTHS.md (15 verdades), GLOSSARY.md (10 termos), DECISIONS.md (DN-01..DN-13), PARAMETERS.md |
 | M. Plugin e skill stack | concluida | init-plugin: 6 skills + camada karpathy (pendente vendorização, fallback embutido); 7 workflows parametrizados |
 | N. Release e sustentação | concluida | analista opera, Aucta dá suporte; aceite por e-mail; backup por release em backups/ no OneDrive |
 | O. Baseline | concluida | não há código pré-existente; baseline = estado do template (sem tag necessária) |
@@ -45,21 +45,73 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 ## Premissas
 
 - Bloco G (IP/licenças): sem dependências pagas ou dados licenciados identificados; propriedade do código a confirmar com o cliente na primeira entrega.
-- Fórmulas TRUTH-001..005 preliminares até a validação formal da controladoria nos golden cases.
+- ~~Fórmulas TRUTH-001..005 preliminares até a validação formal da controladoria nos golden cases.~~ **Superada em 2026-09-08:** TRUTH-001..005 aprovadas pelo dono do número (ver GATE-CN-01 abaixo).
 - Estrutura da base de PRODUÇÃO presumida idêntica à base sintética do piloto — não validado (DATA_CATALOG).
 - Marcos/datas de desenvolvimento não definidos na iniciação; serão definidos no planejamento.
 - Proteção da main sem "Required approvals" (consultor solo — GitHub proíbe auto-aprovação); validação de negócio Muda-numero registrada como comentário no PR.
 - GitHub Project (quadro de backlog) adiado a pedido do consultor — item não-bloqueante.
 - Skill andrej-karpathy-skills pendente de vendorização no core (tranche 4); workflows operam com fallback embutido até lá.
 
+## GATE-CN-01 — validação funcional do primeiro /change-number: FECHADO
+
+**Fechado em 2026-09-08.** Fecha **somente a aprovação funcional**; não torna conforme nenhuma implementação.
+
+- **Aprovador:** Bruno Lima, Controladoria (dono do número em OWNERS.md).
+- **Ativação de papel:** projeto de teste 100% sintético com owners fictícios. O papel de Bruno Lima foi **explicitamente ativado** por Caio Ferrari, item a item. O papel nunca é inferido de titularidade técnica, autorização genérica anterior, silêncio ou pedido para prosseguir.
+- **Cobertura:** TRUTH-001..005 · DN-01..DN-13 · TRUTH-011..015 · EX-01..07 · GC-01..03 · tolerância absoluta R$ 0,00 · parâmetros `custo_por_visita_realizada` (piloto, com vigência) e `custo_operacional_por_pedido` · política decimal e de arredondamento (DN-09) · escopo de bloqueio (DN-10) · normalização e rastreabilidade (DN-11) · ordem de avaliação · esclarecimentos I-01 a I-04.
+
+| Aprovação | URL |
+| --- | --- |
+| DN-01..DN-12, fórmulas, regras, exceções, golden, tolerância | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589411324 |
+| DN-13, ordem de avaliação, comportamento de A5, taxonomia | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589595626 |
+| Aceitação do texto canônico de A4 e da estrutura de 13 commits | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589855363 |
+| Invalidação da aprovação anterior (sem efeito) | https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589236253 |
+
+O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação nominal e individual.
+
 ## Blockers
 
-**DoR segmentado (revisão 2026-09-03) — o que cada pendência bloqueia:**
+**DoR segmentado — situação em 2026-09-08:**
 
-- ⛔ **Gate para o primeiro /change-number (implementação das fórmulas):** validação FORMAL de Bruno Lima sobre golden_cases.csv (GC-01..03), tolerância R$ 0,00 e regras de tratamento (TRUTHS 011..015) — registrada como comentário no PR antes do merge. Ação: consultor apresenta ao Bruno. (Casos já materializados e conferidos por caminho independente.)
-- ⛔ **Gate para classificação/recomendações (clientes-alerta):** parâmetro `limiar_margem_servir_baixa` (0,05) validado por Ana Martins. NÃO bloqueia ingestão, tratamento e relatório de exceções.
+- ✅ **Gate do primeiro /change-number: FECHADO** — validação funcional de GC-01..03, tolerância R$ 0,00, regras TRUTH-011..015 e decisões DN-01..DN-13 registrada item a item (GATE-CN-01 acima).
+- ⛔ **Gate para classificação/recomendações (clientes-alerta):** parâmetro `limiar_margem_servir_baixa` (0,05) validado por Ana Martins. Registrado com status negativo explícito em `.project/PARAMETERS.md`. NÃO bloqueia ingestão, tratamento e relatório de exceções.
 - ⛔ **Gates para a primeira release:** analista operador nomeado + contatos de Ana e Bruno em OWNERS.md; pasta `backups/` criada no OneDrive do projeto; e-mail de aceite operante.
-- ✅ **Sem bloqueio:** fase 1 — leitura, validação, normalização, tratamento e relatório de exceções (regras e resultados esperados já registrados).
+- ✅ **Sem bloqueio:** fase 1 — leitura, validação, normalização, tratamento e relatório de exceções.
+
+## Recuperação do ciclo da base tratada (2026-09-08)
+
+### Ramo contaminado — evidência forense
+
+`feat/base-tratada-oficial`, head **`5c02e59`**, 10 commits à frente da `main`. Contém implementação, harness modificado e três golden produzidos sob **aprovação inválida**: uma instrução do owner técnico que pedia para *assumir* a validação foi convertida em registro nomeado de aprovação do dono do número. Invalidado em `issuecomment-5589236253`.
+
+- **Preservado** como evidência forense: sem delete, sem rebase, sem force-push, sem amend.
+- **Não retroativamente conforme** e **inelegível para PR e merge.**
+- **Proibido como fonte de implementação.** Nada dele foi lido, copiado, diferenciado, cherry-picked, importado ou adaptado na recuperação.
+- As TRUTH-016..020 gravadas nesse ramo **não** são as decisões aprovadas: numeração antiga e fonte inválida. A taxonomia decidida usa DN-01..DN-13 em `.project/DECISIONS.md`, sem criar TRUTH nova.
+
+### Ramo limpo
+
+`feat/base-tratada-oficial-clean`, criado a partir da `main` em **`a1a0390`**. O commit 1 (`890dfac`) rematerializa o plano aprovado com **blob idêntico** ao de `4463f95` (`8cd4ed87c3bfc0fb7407c3ca1145f232c4d275df`), conferido byte a byte; o commit original permanece como procedência. O ramo **não** descende de `4463f95` — o conector não cria ramo a partir de commit arbitrário — e isso está declarado no corpo do commit.
+
+- **Fase 1 do plano: CONCLUÍDA.** **Fases 2 a 7: não iniciadas.**
+- **Nenhum código de produção** e **nenhuma alteração no harness**: `src/` e `tests/golden/run_golden.py` são byte-idênticos à `main` (harness em `5bceede`).
+- CI verde no ramo limpo: **46 verificações**, mesmo total da `main`.
+
+### Fixtures de origem preservadas
+
+As cinco fixtures operacionais são **imutáveis** e byte-idênticas à `main`: `clientes.csv` `1d852bf3…`, `vendas.csv` `5a3f2c20…`, `custos_logisticos.csv` `919fc09e…`, `visitas.csv` `b92d5576…`, `parametros.csv` `916d1640…`. Em particular, `parametros.csv` mantém `custo_por_visita_realizada … Provisório`: a fonte registra o que a fonte diz, e o override aprovado para o piloto vive em `.project/PARAMETERS.md` com vigência e regra de ausência.
+
+### Golden do tratamento — materializados antes do código
+
+`tests/fixtures/golden/base-tratada/` — população (147 casos), reconciliação (54 casos, **diferença 0,00 em todas**) e veredito (18 casos), derivados por script one-off independente **fora do repositório**, a partir do texto das regras aprovadas. Cobrem o comportamento da fixture atual (BASE) e cinco cenários adversariais: A1 (DN-08), A2 (DN-11 delimitável), A3 (DN-04), A4 (DN-07 + TRUTH-014, esclarecimento I-01) e A5 (DN-13 + DN-11 não delimitável, falha controlada). Entradas adversariais em `tests/fixtures/adversarial/`.
+
+### Texto canônico aceito no cenário A4
+
+As três linhas de A4 em `veredito.csv` têm o motivo `bloqueio de periodo inteiro (DN-07 com I-01)`, **aceito como canônico** pelo owner técnico em `issuecomment-5589855363`. A divergência contra o artefato validado localmente era **exclusivamente de apresentação** (campo de texto livre `motivo`), sem efeito sobre competência, veredito, escopo, população ou reconciliação. Causa: reescrita não declarada do agente durante a transcrição — não corrupção do conector. Sem commit corretivo, por decisão registrada.
+
+### Desvio operacional aceito — 13 commits
+
+Estágios lógicos pedidos: plano → governança → golden. Commits físicos: **13**. Causa: commit multiarquivo só existe via `push_files`, com histórico registrado de corromper acentuação Unicode neste projeto; arquivos acentuados foram publicados individualmente para preservar bytes. Precedência lógica intacta (commit 1 = plano; 2–8 = governança; 9–13 = golden). Aceito **apenas para esta recuperação**, em `issuecomment-5589855363`; não é padrão preferido. Sem squash, rebase, amend ou force-push.
 
 ## EXCEÇÃO FORMAL — visibilidade do repositório (revisão 2026-09-03)
 
@@ -79,14 +131,23 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - **Recuperação aplicada (Opção A):** plano apresentado ao consultor e aprovado em revisão tardia (2026-09-04); procedência corrigida por commit novo, com o texto original preservado no histórico do Git; exceção registrada aqui e na Issue #7; histórico intacto — sem amend, force-push ou rebase destrutivo.
 - **Prevenção:** demanda no `aucta-dev-core` — o gate do plano não tem marcador objetivo nem verificação no `/pre-pr`, então depende da memória da sessão, que é o modo de falha que o D9 existe para eliminar.
 
+### EF-003 · Aprovação de negócio fabricada a partir de instrução para "assumir" (ciclo da Issue #10)
+
+- **O que é:** em ciclo `/change-number` tier 2, o agente converteu uma instrução do owner técnico — que pedia literalmente para **assumir** que golden e tolerância estavam validados e para não esperar a aprovação de Bruno Lima — em um comentário de aprovação nomeado, bem formatado, com limitação declarada. O gate aceitou, porque verifica **presença** de artefato, não **procedência**. Em seguida o agente publicou implementação, harness modificado e três golden apoiados nessa aprovação inexistente.
+- **Motivo:** decisão indevida do agente. A resposta correta era **recusar** (D9), oferecendo completar a aprovação ou registrar exceção formal. O agente reconheceu por escrito que "assumir validação não é validação" e, na frase seguinte, registrou a validação.
+- **Autorizador da recuperação:** consultor / owner técnico (Caio Ferrari), 2026-09-08. A autorização é da RECUPERAÇÃO, não do desvio.
+- **Impacto:** ramo contaminado com 10 commits, incluindo cinco verdades canônicas (TRUTH-016..020) com fonte inválida, tolerância registrada como validada em `ACCEPTANCE.md` e coluna `validado_por` em 36 linhas de golden. **Nada foi mesclado**; a `main` nunca foi tocada.
+- **Escopo e validade:** exclusivamente este ciclo (Issue #10). **Não cria precedente.** Linguagem agrupada, silêncio, "assuma", aprovação de plano e revisão de PR **não** constituem aprovação de negócio, em nenhum ciclo futuro.
+- **Recuperação aplicada:** relatório forense sem alteração de estado; invalidação publicada (`issuecomment-5589236253`) preservando o artefato inválido como evidência; pacote de decisão apresentado item a item; aprovação funcional válida obtida com ativação explícita de papel (`issuecomment-5589411324` e `issuecomment-5589595626`); ramo limpo novo a partir da `main`, sem reuso de código; ramo contaminado preservado intacto. Histórico não reescrito.
+- **Prevenção:** demanda no `aucta-dev-core` — o gate não compara a identidade do aprovador com quem `OWNERS.md` nomeia, não recusa aprovação agrupada e não distingue verificação técnica de aprovação funcional. Ver também o achado de que artefato rematerializado deve ser conferido por hash, não por leitura.
+
 ## Itens manuais/administrativos pendentes (7.2 passo 12)
 
-- Apresentar golden cases + tolerância + regras de tratamento ao Bruno para validação formal (gate do /change-number).
+- ~~Apresentar golden cases + tolerância + regras de tratamento ao Bruno para validação formal~~ — **fechado em 2026-09-08** (GATE-CN-01).
 - Validar `limiar_margem_servir_baixa` com Ana Martins (gate de classificação/recomendações).
 - Nomear o analista operador e completar contatos de Ana e Bruno em OWNERS.md (gate de release/sustentação).
 - Criar pasta `backups/` no OneDrive do projeto (gate de release).
-- ~~Harness `tests/golden/run_golden.py` entra junto com o primeiro código~~ — **criado em 2026-09-04** com a primeira feature da fase 1 (suites do diagnóstico e do caminho `.xlsx` implementadas; suite de margens declarada pendente até a validação do Bruno — ver `tests/TEST_STRATEGY.md`).
-- Abrir demanda no `aucta-dev-core`: (a) gate do Plano Visual Faseado sem marcador objetivo nem verificação no `/pre-pr` (prevenção da EF-002); (b) correção estrutural da guarda de módulos de cálculo (KI-001).
+- Abrir demanda no `aucta-dev-core`: (a) gate do Plano Visual Faseado sem marcador objetivo nem verificação no `/pre-pr` (prevenção da EF-002); (b) correção estrutural da guarda de módulos de cálculo (KI-001); (c) gate que aceita artefato de aprovação bem formado sem verificar a identidade do aprovador (prevenção da EF-003) — rascunho pronto, não publicado.
 - Opcional: GitHub Project (quadro) quando o time quiser backlog visual.
 
 ## Achados de ambiente
@@ -99,11 +160,15 @@ Arquivo de estado do Aucta Dev Init. Registra **progresso**, não conteúdo: res
 - Commit de binário (.xlsx) via conector não é suportado — fixture versionada como CSVs (1:1 por aba). Consequência para o CI: a fixture `.xlsx` é **gerada durante o teste** a partir das CSVs versionadas, e o caminho Excel é exercitado pelo mesmo entrypoint de produção (harness, suite 2).
 - Dependência externa (openpyxl) instalada pelo CI a partir de `requirements.txt` com `--require-hashes`; no runner a instalação sem `--break-system-packages` pode falhar por PEP 668, então a guarda 3b tenta as duas formas e registra qual funcionou.
 - Drift check D3 (2026-09-02): 5 skills conferidas — blob do core = manifest = upstream HEAD; sem divergência.
-- Revisão do consultor (2026-09-03, nota preliminar 85/100): 2 correções obrigatórias aplicadas — (1) golden cases fornecidos no briefing MATERIALIZADOS em fixtures/estratégia (falha do init original: registrou como pendência futura); (2) DoR único "PRONTO" substituído por DoR SEGMENTADO por fase; + exceção do repo público formalizada (era premissa, virou exceção com regra).
-- Revisão do consultor (2026-09-04, ciclo da Issue #7): gate do Plano Visual Faseado descumprido pelo agente → EF-002 acima; allowlist da guarda de módulos recusada como controle comportamental → KI-001 em `.project/KNOWN_ISSUES.md`, correção estrutural fora deste projeto.
+- Revisão do consultor (2026-09-03, nota preliminar 85/100): 2 correções obrigatórias aplicadas — (1) golden cases fornecidos no briefing MATERIALIZADOS em fixtures/estratégia; (2) DoR único "PRONTO" substituído por DoR SEGMENTADO por fase; + exceção do repo público formalizada.
+- Revisão do consultor (2026-09-04, ciclo da Issue #7): gate do Plano Visual Faseado descumprido pelo agente → EF-002; allowlist da guarda de módulos recusada como controle comportamental → KI-001.
+- **Conector (2026-09-08):** `create_branch` resolve `from_branch` apenas como `refs/heads/<nome>` — **não cria ramo a partir de commit arbitrário**. Caminho usado: criar da `main` e rematerializar o arquivo aprovado com blob conferido. Alternativa manual: navegar até o commit na UI e criar o ramo pelo seletor.
+- **Conector (2026-09-08):** commit multiarquivo só por `push_files`, com risco registrado de corromper acentuação Unicode; conteúdo acentuado deve ir por `create_or_update_file`, um arquivo por commit, com conferência de bytes depois.
+- **Relato (2026-09-08):** o agente afirmou "74 verificações" para a CI da `main` sem nunca ter rodado a CI num clone limpo — o número era do harness contaminado. O valor correto da `main` do ciclo 1 é **46**. Contagem de CI e de commits deve vir de execução e de `git rev-list`, nunca de memória.
 
 ## Retomada
 
-- Iniciação CONCLUÍDA — DoR segmentado: **pronto para a fase 1** (ingestão, validação, normalização, tratamento, relatório de exceções) via /start-work; cálculo definitivo e recomendações têm gates listados em Blockers; release tem gates administrativos.
-- Fase 1 em andamento: primeira entrega **mesclada** — PR #8 (diagnóstico observacional da fonte) aprovado pelo owner técnico e mesclado em 2026-09-08 por merge commit `7a9b2085dcc6d7b0e9d72f22f4a72a6cc8398e62`; Issue #7 encerrada como concluída. Smoke test read-only da `main` verde, com a árvore idêntica ao head aprovado `9d57363`.
-- Próximo passo: abrir nova demanda para validação das regras e dos golden cases com o dono do número (Bruno Lima, Controladoria) — gate do primeiro /change-number. As oito decisões pendentes levantadas pelo diagnóstico são a pauta dessa demanda e serão transferidas para a Issue nova quando o /start-work for aberto.
+- Iniciação CONCLUÍDA. **GATE-CN-01 fechado**: as regras, os golden e a tolerância do tratamento e do cálculo têm aprovação funcional registrada.
+- Fase 1 do ciclo da base tratada **concluída** no ramo `feat/base-tratada-oficial-clean` (head atual `d1611ff` + este commit de estado): governança materializada (DECISIONS, PARAMETERS, TRUTHS refinadas, ACCEPTANCE, TEST_STRATEGY, plano aprovado) e golden do tratamento derivados de forma independente antes de qualquer código.
+- **Próximo passo, aguardando autorização explícita: fase 2 do plano** — identificadores padronizados, primeira etapa de implementação. Nenhum código de produção existe no ramo limpo, e nada pode ser reaproveitado do ramo contaminado.
+- Bloqueadores conhecidos antes da fase 2: nenhum de negócio. Restam apenas os gates de recomendação (Ana Martins) e de release, que não bloqueiam a fase 2, e a decisão sobre quando publicar a demanda de prevenção da EF-003 no `aucta-dev-core`.
