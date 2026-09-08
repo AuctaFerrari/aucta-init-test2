@@ -66,4 +66,16 @@ else
   echo "ok: sem código sob teste ainda"
 fi
 
+echo "== 4b. Conferência da fase 2 — identificadores (DN-11) =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase2.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase2.py || { echo "FALHA: conferência da fase 2 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase2.py ausente — a fase 2 está registrada no inventário de módulos"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
 exit $fail
