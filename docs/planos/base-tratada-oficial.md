@@ -4,7 +4,7 @@
 Aprovador técnico: **Caio Ferrari** (owner técnico). Referência: Issue #10, https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5589411324.
 A aprovação vale **a partir daquela mensagem** e cobre **apenas o plano de execução técnica**. Não aprova regra de negócio, exceção, valor golden, fórmula ou tolerância — essas têm aprovação própria do dono do número, registrada em `.project/DECISIONS.md`. **Não** torna retroativamente conforme nenhuma implementação anterior.
 
-**Nenhuma implementação do ramo `feat/base-tratada-oficial` (head `5c02e59`) foi reaproveitada.** Nada foi lido, copiado, diferenciado, cherry-picked, importado ou adaptado daquele ramo: nem `src/base_tratada.py`, nem o harness modificado, nem os três arquivos de golden, nem qualquer commit posterior a `4463f95`. Aquele ramo segue como evidência forense e inelegível para PR e merge.
+**Nenhuma implementação do ramo `feat/base-tratada-oficial` (head `5c02e59`) foi reaproveitada.** Na recuperação das fases 1–3, nada foi lido ou copiado daquele ramo. Na auditoria que antecedeu a fase 4, o agente Codex consultou o módulo contaminado para compreender o histórico, contrariando a restrição de leitura do índice; o desvio está registrado como EF-005. O código novo foi escrito contra as decisões aprovadas e os golden do ramo limpo, sem cherry-pick, importação ou cópia. Aquele ramo segue inelegível para PR e merge.
 
 **Procedência deste arquivo:** rematerialização byte a byte do plano aprovado no commit `4463f95` (blob `8cd4ed87c3bfc0fb7407c3ca1145f232c4d275df`), no primeiro commit deste ramo. Este ramo nasce da `main` em `a1a0390` porque o conector não cria ramo a partir de commit arbitrário; o commit original permanece como procedência.
 
@@ -30,12 +30,21 @@ O cálculo de margens usa as fórmulas TRUTH-001..005, agora aprovadas, mas depe
 | 1 | Referência de conferência do tratamento | Arquivo com a base tratada esperada e a quarentena esperada, calculadas **fora** do programa que será construído — a resposta existe antes do código | **concluída** — golden derivados de forma independente em `tests/fixtures/golden/base-tratada/`, cobrindo a fixture atual e cinco cenários adversariais |
 | 2 | Identificadores padronizados | Cada identificador corrigido aparece no log com valor anterior → valor novo e a regra que autorizou | **concluída** — `src/identificadores.py` com DN-11 e DN-13, conferido por `tests/golden/run_fase2.py` (7 suites) e pela guarda 4b do CI |
 | 3 | Versão que vale de cada pedido | Para cada pedido repetido, qual versão entrou, qual foi descartada e por quê | **concluída** — `src/versao_pedido.py` com TRUTH-011, DN-04 e DN-14, conferido por `tests/golden/run_fase3.py` (7 suites) e pela guarda 4c do CI |
-| 4 | Pedidos que não entram | Duas listas separadas: excluídos por regra (cancelados) e retidos por falta de informação (quarentena), cada um com o motivo e o código da exceção | não iniciada |
-| 5 | Base tratada oficial e visitas válidas | A base tratada em si, com os dados do cliente já cruzados, e as visitas classificadas em válida / não realizada / exceção | não iniciada |
-| 6 | Reconciliação e relatório de tratamento | Prova de que fonte bruta = base tratada + excluídos + quarentena + fora do período, em contagem e em reais (diferença R$ 0,00), mais o relatório legível pela controladoria | não iniciada |
-| 7 | Conferência independente | Conferência que recalcula tudo por caminho próprio, reproduz os insumos de GC-01..03 a partir da base tratada e prova que o diagnóstico do ciclo anterior não mudou | não iniciada |
+| 4 | Pedidos que não entram | Duas listas separadas: excluídos por regra (cancelados) e retidos por falta de informação (quarentena), cada um com o motivo e o código da exceção | **concluída** — `src/pedidos_nao_entram.py`, conferido contra BASE e A1/A2/A3/A5 |
+| 5 | Base tratada oficial e visitas válidas | A base tratada em si, com os dados do cliente já cruzados, e as visitas classificadas em válida / não realizada / exceção | **concluída** — 147 registros de BASE e A1–A5 conferidos contra o golden |
+| 6 | Reconciliação e relatório de tratamento | Prova de que fonte bruta = base tratada + excluídos + quarentena + fora do período, em contagem e em reais (diferença R$ 0,00), mais o relatório legível pela controladoria | **concluída** — 54 linhas de reconciliação e 18 vereditos conferidos; sete artefatos produzidos |
+| 7 | Conferência independente | Conferência que recalcula tudo por caminho próprio, reproduz os insumos de GC-01..03 a partir da base tratada e prova que o diagnóstico do ciclo anterior não mudou | **concluída** — determinismo, paridade CSV/Excel, integridade e derivabilidade verificados |
 
 A ordem é obrigatória: a fase 1 existe porque a resposta esperada nunca pode ser produzida pelo programa que está sendo testado (D10 — golden antes da implementação).
+
+## Evidência das fases 4 a 7
+
+- **Testes antes do código:** `run_fase4.py`, `run_fase5.py` e `run_fase6.py` foram commitados antes dos respectivos módulos e reprovaram pela ausência deles.
+- **Fase 4:** destino e escopo de bloqueio de cada pedido conferidos contra o golden em BASE, A1, A2, A3 e A5; A5 retorna exit 5 e artefato auditável.
+- **Fase 5:** os 147 registros de pedidos e visitas de BASE e A1–A5 têm a população, o destino e o sinal de bloqueio esperados.
+- **Fase 6:** as 54 linhas de reconciliação fecham em diferença zero e os 18 vereditos por competência batem com a referência. Execuções válidas produzem os sete artefatos do plano; A5 produz somente o JSON mínimo de falha.
+- **Fase 7:** duas execuções são idênticas byte a byte; CSV e Excel têm o mesmo resultado semântico; a origem e as fixtures permanecem intactas; o diagnóstico observacional não muda; GC-01..03 são deriváveis com tolerância R$ 0,00 por implementação exclusiva da suíte.
+- **Limite preservado:** nenhum módulo de produção calcula margem, ranking, recomendação ou indicador econômico.
 
 ## Evidência da fase 2 — identificadores padronizados
 
