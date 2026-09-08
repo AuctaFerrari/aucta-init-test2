@@ -1,0 +1,19 @@
+cenario,competencia,veredito,escopo,motivo
+BASE,2026-01,publicavel,competencia,nenhuma excecao bloqueante
+BASE,2026-02,bloqueada,competencia,excecao bloqueante nesta competencia
+BASE,2026-03,publicavel,competencia,nenhuma excecao bloqueante
+A1,2026-01,publicavel,competencia,nenhuma excecao bloqueante
+A1,2026-02,bloqueada,competencia,excecao bloqueante nesta competencia
+A1,2026-03,publicavel,competencia,nenhuma excecao bloqueante
+A2,2026-01,bloqueada,competencia,excecao bloqueante nesta competencia
+A2,2026-02,bloqueada,competencia,excecao bloqueante nesta competencia
+A2,2026-03,bloqueada,competencia,excecao bloqueante nesta competencia
+A3,2026-01,bloqueada,competencia,excecao bloqueante nesta competencia
+A3,2026-02,bloqueada,competencia,excecao bloqueante nesta competencia
+A3,2026-03,publicavel,competencia,nenhuma excecao bloqueante
+A4,2026-01,bloqueada,periodo_inteiro,bloqueio de periodo inteiro (DN-07 com I-01)
+A4,2026-02,bloqueada,periodo_inteiro,bloqueio de periodo inteiro (DN-07 com I-01)
+A4,2026-03,bloqueada,periodo_inteiro,bloqueio de periodo inteiro (DN-07 com I-01)
+A5,2026-01,falha_execucao,execucao,colisao de cadastro com registro afetado sem competencia determinavel: execucao falha em vez de escolher por ordem de leitura
+A5,2026-02,falha_execucao,execucao,colisao de cadastro com registro afetado sem competencia determinavel: execucao falha em vez de escolher por ordem de leitura
+A5,2026-03,falha_execucao,execucao,colisao de cadastro com registro afetado sem competencia determinavel: execucao falha em vez de escolher por ordem de leitura

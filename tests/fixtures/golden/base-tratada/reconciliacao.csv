@@ -1,0 +1,55 @@
+cenario,bloco,campo,unidade,origem,base_tratada,excluido,quarentena,fora_do_periodo,vazios,diferenca,situacao,observacao
+BASE,vendas,linhas,contagem,13,8,2,3,0,0,0,ok,
+BASE,vendas,receita_bruta,BRL,11950.00,7950.00,2000.00,2000.00,0.00,0,0.00,ok,
+BASE,vendas,desconto,BRL,940.00,520.00,350.00,70.00,0.00,0,0.00,ok,
+BASE,vendas,custo_produto,BRL,5960.00,4160.00,1100.00,700.00,0.00,1,0.00,ok,
+BASE,custos_logisticos,linhas,contagem,12,8,1,3,0,0,0,ok,alocadas pelo destino do pedido
+BASE,custos_logisticos,frete,BRL,865.00,670.00,100.00,95.00,0.00,1,0.00,ok,
+BASE,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+BASE,visitas,linhas,contagem,11,9,2,0,0,0,0,ok,validas / nao validas / quarentena
+BASE,clientes,linhas,contagem,6,6,0,0,0,0,0,ok,nenhum tratamento aplicado
+A1,vendas,linhas,contagem,14,8,2,3,1,0,0,ok,
+A1,vendas,receita_bruta,BRL,12250.00,7950.00,2000.00,2000.00,300.00,0,0.00,ok,
+A1,vendas,desconto,BRL,940.00,520.00,350.00,70.00,0.00,0,0.00,ok,
+A1,vendas,custo_produto,BRL,6110.00,4160.00,1100.00,700.00,150.00,1,0.00,ok,
+A1,custos_logisticos,linhas,contagem,13,8,1,3,1,0,0,ok,alocadas pelo destino do pedido
+A1,custos_logisticos,frete,BRL,890.00,670.00,100.00,95.00,25.00,1,0.00,ok,
+A1,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+A1,visitas,linhas,contagem,11,9,2,0,0,0,0,ok,validas / nao validas / quarentena
+A1,clientes,linhas,contagem,6,6,0,0,0,0,0,ok,nenhum tratamento aplicado
+A2,vendas,linhas,contagem,13,5,2,6,0,0,0,ok,
+A2,vendas,receita_bruta,BRL,11950.00,5250.00,2000.00,4700.00,0.00,0,0.00,ok,
+A2,vendas,desconto,BRL,940.00,310.00,350.00,280.00,0.00,0,0.00,ok,
+A2,vendas,custo_produto,BRL,5960.00,2840.00,1100.00,2020.00,0.00,1,0.00,ok,
+A2,custos_logisticos,linhas,contagem,12,5,1,6,0,0,0,ok,alocadas pelo destino do pedido
+A2,custos_logisticos,frete,BRL,865.00,455.00,100.00,310.00,0.00,1,0.00,ok,
+A2,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+A2,visitas,linhas,contagem,11,6,2,3,0,0,0,ok,validas / nao validas / quarentena
+A2,clientes,linhas,contagem,7,7,0,0,0,0,0,ok,nenhum tratamento aplicado
+A3,vendas,linhas,contagem,13,7,1,5,0,0,0,ok,
+A3,vendas,receita_bruta,BRL,11950.00,7450.00,1500.00,3000.00,0.00,0,0.00,ok,
+A3,vendas,desconto,BRL,940.00,470.00,300.00,170.00,0.00,0,0.00,ok,
+A3,vendas,custo_produto,BRL,5960.00,3900.00,850.00,1210.00,0.00,1,0.00,ok,
+A3,custos_logisticos,linhas,contagem,12,7,1,4,0,0,0,ok,alocadas pelo destino do pedido
+A3,custos_logisticos,frete,BRL,865.00,630.00,100.00,135.00,0.00,1,0.00,ok,
+A3,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+A3,visitas,linhas,contagem,11,9,2,0,0,0,0,ok,validas / nao validas / quarentena
+A3,clientes,linhas,contagem,6,6,0,0,0,0,0,ok,nenhum tratamento aplicado
+A4,vendas,linhas,contagem,13,8,2,3,0,0,0,ok,
+A4,vendas,receita_bruta,BRL,11950.00,7950.00,2000.00,2000.00,0.00,0,0.00,ok,
+A4,vendas,desconto,BRL,940.00,520.00,350.00,70.00,0.00,0,0.00,ok,
+A4,vendas,custo_produto,BRL,5960.00,4160.00,1100.00,700.00,0.00,1,0.00,ok,
+A4,custos_logisticos,linhas,contagem,12,8,1,3,0,0,0,ok,alocadas pelo destino do pedido
+A4,custos_logisticos,frete,BRL,865.00,670.00,100.00,95.00,0.00,1,0.00,ok,
+A4,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+A4,visitas,linhas,contagem,12,9,2,1,0,0,0,ok,validas / nao validas / quarentena
+A4,clientes,linhas,contagem,6,6,0,0,0,0,0,ok,nenhum tratamento aplicado
+A5,vendas,linhas,contagem,14,5,2,7,0,0,0,ok,
+A5,vendas,receita_bruta,BRL,12150.00,5250.00,2000.00,4900.00,0.00,0,0.00,ok,
+A5,vendas,desconto,BRL,940.00,310.00,350.00,280.00,0.00,0,0.00,ok,
+A5,vendas,custo_produto,BRL,6050.00,2840.00,1100.00,2110.00,0.00,1,0.00,ok,
+A5,custos_logisticos,linhas,contagem,13,5,1,7,0,0,0,ok,alocadas pelo destino do pedido
+A5,custos_logisticos,frete,BRL,880.00,455.00,100.00,325.00,0.00,1,0.00,ok,
+A5,custos_logisticos,custo_manuseio,BRL,0.00,0.00,0.00,0.00,0.00,0,0.00,ok,
+A5,visitas,linhas,contagem,11,6,2,3,0,0,0,ok,validas / nao validas / quarentena
+A5,clientes,linhas,contagem,7,7,0,0,0,0,0,ok,nenhum tratamento aplicado
