@@ -17,13 +17,24 @@ Suites:
      (contrato ASCII preservado no JSON, rotulo acentuado no Markdown, coluna de
      status da evidencia) e decisoes pendentes consolidadas: D-003 e D-006
      seguem como dois achados, com uma unica decisao no resumo.
-  4. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
-     nesta versao: nao existe modulo de calculo no repositorio e as formulas
-     TRUTH-001..005 seguem pendentes de validacao formal da controladoria
-     (gate do primeiro /change-number). A suite FALHA de proposito se aparecer
-     em `src/` qualquer modulo fora da lista observacional. ATENCAO: essa
-     verificacao e uma lista de nomes de arquivo, nao uma analise de
-     comportamento — limitacao registrada em .project/KNOWN_ISSUES.md (KI-001).
+  4. Inventario de modulos de src/ — todo modulo declarado com a sua categoria
+     (observacional / tratamento) e nenhum modulo de CALCULO permitido enquanto
+     as formulas TRUTH-001..005 seguem pendentes de validacao formal da
+     controladoria (gate do primeiro /change-number). ATENCAO: a checagem por
+     nome de arquivo NAO e analise de comportamento — limitacao registrada em
+     .project/KNOWN_ISSUES.md (KI-001). O que sustenta o limite de escopo de
+     cada modulo sao as suites comportamentais 1 e 5.
+  5. Base tratada oficial — populacao, excecoes, log, reconciliacao e veredito
+     por competencia, comparados com a recomputacao independente feita aqui E
+     com os golden congelados (golden_base_tratada, golden_reconciliacao,
+     golden_veredito_competencia); contrato de colunas fechado, valores
+     identicos a fonte, origem intocada e saida deterministica.
+  6. Base tratada pelo caminho .xlsx — mesmo entrypoint sobre a planilha gerada
+     no teste, exigindo resultado identico ao caminho CSV.
+  7. Derivabilidade de GC-01..03 a partir da base tratada — a conta e feita
+     nesta suite, nunca em src/: prova que os insumos dos casos de conferencia
+     saem da base tratada com tolerancia R$ 0,00, sem que a entrega calcule
+     qualquer margem.
 
 Uso: python tests/golden/run_golden.py
 """
@@ -43,11 +54,21 @@ RAIZ = Path(__file__).resolve().parents[2]
 FIXTURES = RAIZ / "tests" / "fixtures"
 SRC = RAIZ / "src"
 
-# Modulos observacionais conhecidos (nao produzem numero entregue ao cliente).
-# LIMITACAO CONHECIDA: e uma lista de NOMES, nao uma verificacao de
-# comportamento. Ver .project/KNOWN_ISSUES.md (KI-001) e a demanda aberta no
-# aucta-dev-core. Nao corrigir aqui: correcao estrutural e demanda separada.
-MODULOS_OBSERVACIONAIS = {"diagnostico_fonte.py"}
+# Inventario declarado dos modulos de src/, com a categoria de cada um. Nenhum
+# modulo de CALCULO e permitido enquanto as formulas TRUTH-001..005 nao tiverem
+# validacao formal da controladoria.
+# LIMITACAO CONHECIDA (KI-001, segue aberta): a checagem por nome de arquivo nao
+# e verificacao de comportamento. O que sustenta o limite de escopo de cada
+# modulo sao as suites comportamentais: a 1 para o diagnostico (nenhum campo de
+# indicador na saida) e a 5 para o tratamento (contrato de colunas fechado, toda
+# chave conferida e todo valor identico a fonte). A correcao estrutural da guarda
+# e demanda do aucta-dev-core (issue #27) — nao se resolve aqui, e a guarda nao
+# foi enfraquecida para o codigo deste ciclo passar.
+MODULOS_DECLARADOS = {
+    "diagnostico_fonte.py": "observacional",
+    "base_tratada.py": "tratamento",
+}
+CATEGORIAS_SEM_CALCULO = {"observacional", "tratamento"}
 
 # Abas correspondentes a cada CSV de fixture (usado para gerar a fixture .xlsx).
 CONTRATO_ABAS = {
@@ -434,19 +455,394 @@ def suite_textos(payload: dict, markdown: str) -> None:
                "todos os demais achados aparecem como 'Observado' no Markdown")
 
 
-def suite_margens() -> None:
-    print("== Suite 4: margens / golden cases (GC-01..03) ==")
-    modulos = sorted(p.name for p in SRC.glob("*.py")) if SRC.exists() else []
-    fora_da_lista = [m for m in modulos if m not in MODULOS_OBSERVACIONAIS]
-    if fora_da_lista:
-        checar(False, "modulo de calculo em src/ exige a suite de margens implementada",
-               f"modulos nao observacionais: {fora_da_lista}")
+def suite_inventario_modulos() -> None:
+    print("== Suite 4: inventario de modulos de src/ (guarda de modulo de calculo) ==")
+    modulos = sorted(p.name for p in SRC.rglob("*.py")) if SRC.exists() else []
+    nao_declarados = [m for m in modulos if m not in MODULOS_DECLARADOS]
+    checar(not nao_declarados,
+           "todo modulo de src/ esta declarado no inventario com a sua categoria",
+           f"nao declarados: {nao_declarados} — modulo novo exige categoria declarada e, "
+           "se produzir numero entregue, a suite de margens implementada e a validacao "
+           "formal da controladoria (/change-number)")
+    categorias = {MODULOS_DECLARADOS[m] for m in modulos if m in MODULOS_DECLARADOS}
+    checar(categorias <= CATEGORIAS_SEM_CALCULO,
+           "nenhum modulo de calculo em src/ enquanto TRUTH-001..005 seguem preliminares",
+           f"categorias presentes: {sorted(categorias)}")
+    print("  PENDENTE (nao aplicavel nesta versao): suite de margens sobre um modulo de "
+          "calculo; as formulas TRUTH-001..005 aguardam validacao formal da controladoria. "
+          "A derivabilidade dos GC-01..03 a partir da base tratada e conferida na suite 7.")
+
+
+# ---------------------------------------------------------------------------
+# Suites da base tratada (ciclo 2). Recomputacao INDEPENDENTE: a referencia
+# abaixo e reimplementada aqui com `csv` da stdlib, sem importar nada de src/.
+# ---------------------------------------------------------------------------
+
+# Contrato de colunas declarado de forma INDEPENDENTE do modulo sob teste.
+# Se o modulo passar a emitir uma coluna nova, a suite reprova.
+COLUNAS_PEDIDOS_ESPERADAS = [
+    "competencia", "pedido_id", "cliente_id", "cliente_id_origem", "razao_social",
+    "regiao", "segmento", "canal", "status_cliente", "data_pedido", "atualizado_em",
+    "receita_bruta", "desconto", "custo_produto", "frete", "custo_manuseio",
+    "status_pedido", "marcas", "linha_origem_vendas",
+]
+COLUNAS_VISITAS_ESPERADAS = [
+    "competencia", "visita_id", "cliente_id", "cliente_id_origem", "status",
+    "data_planejada", "data_realizada", "classificacao", "marcas", "linha_origem",
+]
+# Nomes de campo proibidos em qualquer saida do tratamento. A verificacao e
+# ESTRUTURAL (chaves e valores), nao varredura de texto livre: a versao de texto
+# livre foi justamente a que se enfraqueceu no ciclo anterior (KI-001), porque
+# batia no texto explicativo do proprio relatorio.
+CHAVES_DE_INDICADOR = (
+    "receita_liquida", "margem", "margem_contribuicao", "margem_servir", "ranking",
+    "clientes_alerta", "indicador", "score", "limiar", "aderencia", "rentabilidade",
+)
+
+
+def rodar_base_tratada(saida: Path, entrada: Path = FIXTURES, rotulo: str = "harness") -> dict:
+    """Executa o MESMO entrypoint de producao (src/base_tratada.py)."""
+    resultado = subprocess.run(
+        [sys.executable, str(SRC / "base_tratada.py"),
+         "--entrada", str(entrada), "--saida", str(saida),
+         "--rotulo", rotulo, "--periodo", "2026-01:2026-03"],
+        cwd=RAIZ, capture_output=True, text=True,
+    )
+    if resultado.returncode != 0:
+        print(resultado.stdout)
+        print(resultado.stderr)
+        raise SystemExit("FALHA: base tratada terminou com erro")
+    return json.loads((saida / f"tratamento_{rotulo}.json").read_text(encoding="utf-8"))
+
+
+def esperado_tratamento() -> dict:
+    """Recomputacao independente das regras aprovadas, so com csv da stdlib."""
+    def norm(valor):
+        return (valor or "").strip().upper()
+
+    def numero(valor):
+        texto = (valor or "").strip()
+        if texto == "":
+            return None
+        try:
+            return float(texto)
+        except ValueError:
+            return None
+
+    clientes = {norm(r["cliente_id"]): r for r in ler("clientes.csv")}
+    logistica = {norm(r["pedido_id"]): r for r in ler("custos_logisticos.csv")}
+
+    versoes = {}
+    for i, reg in enumerate(ler("vendas.csv"), start=2):
+        versoes.setdefault(norm(reg["pedido_id"]), []).append((i, reg))
+
+    pedidos, excecoes = {}, {}
+    for pid, grupo in versoes.items():
+        ordenado = sorted(grupo, key=lambda par: (par[1]["atualizado_em"], par[0]))
+        recentes = [p for p in ordenado if p[1]["atualizado_em"] == ordenado[-1][1]["atualizado_em"]]
+        if len(recentes) > 1:                                   # TRUTH-020
+            for linha, _ in ordenado:
+                excecoes[(pid, linha)] = ("quarentena", "sim")
+            continue
+        for linha, _ in ordenado[:-1]:                          # TRUTH-011
+            excecoes[(pid, linha)] = ("excluido_regra", "nao")
+        linha, reg = ordenado[-1]
+        status = reg["status_pedido"].strip()
+        if status == "Cancelado":                               # TRUTH-012
+            excecoes[(pid, linha)] = ("excluido_regra", "nao")
+            continue
+        problemas = (
+            status != "Faturado"
+            or norm(reg["cliente_id"]) not in clientes
+            or numero(reg["receita_bruta"]) is None
+            or numero(reg["custo_produto"]) is None
+            or pid not in logistica
+            or numero(logistica.get(pid, {}).get("frete")) is None
+        )
+        if problemas:                                           # TRUTH-013 / 016
+            excecoes[(pid, linha)] = ("quarentena", "sim")
+        else:
+            pedidos[(pid, linha)] = norm(reg["cliente_id"])
+
+    visitas = {}
+    for i, reg in enumerate(ler("visitas.csv"), start=2):
+        status = reg["status"].strip()
+        realizada = reg["data_realizada"].strip()
+        if status == "Realizada" and realizada == "":           # TRUTH-014
+            visitas[(norm(reg["visita_id"]), i)] = "excecao_reportada"
+        elif status != "Realizada":
+            visitas[(norm(reg["visita_id"]), i)] = "nao_realizada"
+        else:
+            visitas[(norm(reg["visita_id"]), i)] = "valida"
+    return {"pedidos": pedidos, "excecoes": excecoes, "visitas": visitas}
+
+
+def suite_base_tratada() -> dict:
+    print("== Suite 5: base tratada, excecoes e reconciliacao ==")
+
+    hashes_antes = {p.name: sha256(p) for p in sorted(FIXTURES.glob("*.csv"))}
+    esperado = esperado_tratamento()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        saida = Path(tmp) / "bt"
+        payload = rodar_base_tratada(saida)
+        arquivos = {p.name: p.read_bytes() for p in sorted(saida.iterdir())}
+        cabecalhos = {p.name: p.read_text(encoding="utf-8").splitlines()[0].split(",")
+                      for p in sorted(saida.glob("*.csv"))}
+        saida2 = Path(tmp) / "bt2"
+        payload2 = rodar_base_tratada(saida2)
+        arquivos2 = {p.name: p.read_bytes() for p in sorted(saida2.iterdir())}
+
+    # 1. populacao da base tratada igual a recomputacao independente
+    obtidos = {(p["pedido_id"], p["linha_origem_vendas"]) for p in payload["base_tratada_pedidos"]}
+    checar(obtidos == set(esperado["pedidos"]), "pedidos da base tratada = recomputacao independente",
+           f"somente no modulo: {sorted(obtidos - set(esperado['pedidos']))} | "
+           f"somente na recomputacao: {sorted(set(esperado['pedidos']) - obtidos)}")
+
+    # 2. destino e bloqueio de cada excecao iguais a recomputacao independente
+    exc_modulo = {(e["id"], e["linha_origem"]): (e["destino"], e["bloqueia_publicacao"])
+                  for e in payload["excecoes"] if e["entidade"] == "pedido"}
+    checar(exc_modulo == esperado["excecoes"], "excecoes de pedido = recomputacao independente",
+           f"modulo: {sorted(exc_modulo.items())} | esperado: {sorted(esperado['excecoes'].items())}")
+
+    # 3. classificacao das visitas igual a recomputacao independente
+    vis_modulo = {(v["visita_id"], v["linha_origem"]): v["classificacao"]
+                  for v in payload["base_tratada_visitas"]}
+    vis_modulo.update({(e["id"], e["linha_origem"]): e["destino"]
+                       for e in payload["excecoes"] if e["entidade"] == "visita"
+                       and e["destino"] == "quarentena"})
+    checar(vis_modulo == esperado["visitas"], "classificacao das visitas = recomputacao independente",
+           f"modulo: {sorted(vis_modulo.items())} | esperado: {sorted(esperado['visitas'].items())}")
+
+    # 4. golden congelado da base tratada (BT-01..24), caso a caso
+    destinos = {}
+    for p in payload["base_tratada_pedidos"]:
+        destinos[("pedido", p["pedido_id"], str(p["linha_origem_vendas"]))] = "base_tratada"
+    for v in payload["base_tratada_visitas"]:
+        destinos[("visita", v["visita_id"], str(v["linha_origem"]))] = v["classificacao"]
+    for e in payload["excecoes"]:
+        destinos[(e["entidade"], e["id"], str(e["linha_origem"]))] = e["destino"]
+    golden_bt = ler("golden_base_tratada.csv")
+    divergentes = []
+    for caso in golden_bt:
+        chave = (caso["entidade"], caso["id"], caso["linha_origem"])
+        obtido = destinos.get(chave)
+        if obtido != caso["destino_esperado"]:
+            divergentes.append(f"{caso['caso_id']} {chave}: {obtido} != {caso['destino_esperado']}")
+    checar(not divergentes, f"golden da base tratada ({len(golden_bt)} casos, tolerancia 0)",
+           "; ".join(divergentes))
+
+    # 5. bloqueio de publicacao conforme o golden
+    bloq_golden = {(c["entidade"], c["id"], c["linha_origem"]): c["bloqueia_publicacao"]
+                   for c in golden_bt if c["bloqueia_publicacao"] == "sim"}
+    bloq_modulo = {(e["entidade"], e["id"], str(e["linha_origem"])): e["bloqueia_publicacao"]
+                   for e in payload["excecoes"] if e["bloqueia_publicacao"] == "sim"}
+    checar(bloq_modulo == bloq_golden, "excecoes bloqueantes = golden",
+           f"modulo: {sorted(bloq_modulo)} | golden: {sorted(bloq_golden)}")
+    checar(payload["resumo"]["publicacao_bloqueada"] == "sim",
+           "publicacao bloqueada com excecao bloqueante aberta (ACC-007)")
+
+    # 6. reconciliacao: golden congelado, celula a celula, e diferenca zero
+    rec_modulo = {(r["bloco"], r["campo"]): r for r in payload["reconciliacao"]}
+    golden_rec = ler("golden_reconciliacao.csv")
+    erros = []
+    for caso in golden_rec:
+        obtido = rec_modulo.get((caso["bloco"], caso["campo"]))
+        if obtido is None:
+            erros.append(f"{caso['caso_id']}: bloco ausente")
+            continue
+        for coluna in ("total_origem", "total_base_tratada", "total_excluido_regra",
+                       "total_quarentena"):
+            if float(obtido[coluna]) != float(caso[coluna]):
+                erros.append(f"{caso['caso_id']}.{coluna}: {obtido[coluna]} != {caso[coluna]}")
+        if int(obtido["vazios_origem"]) != int(caso["vazios_origem"]):
+            erros.append(f"{caso['caso_id']}.vazios: {obtido['vazios_origem']} != {caso['vazios_origem']}")
+    checar(not erros, f"golden da reconciliacao ({len(golden_rec)} casos)", "; ".join(erros))
+    checar(all(float(r["diferenca"]) == 0 and r["situacao"] == "ok"
+               for r in payload["reconciliacao"]),
+           "conservacao: origem = tratada + excluido + quarentena (diferenca 0)",
+           str([(r["bloco"], r["campo"], r["diferenca"]) for r in payload["reconciliacao"]
+                if float(r["diferenca"]) != 0]))
+    checar(payload["resumo"]["reconciliacao"] == "ok", "reconciliacao reportada como ok")
+
+    # 7. veredito por competencia = golden congelado
+    ver_modulo = {v["competencia"]: v for v in payload["veredito_competencia"]}
+    golden_ver = ler("golden_veredito_competencia.csv")
+    erros = []
+    for caso in golden_ver:
+        obtido = ver_modulo.get(caso["competencia"])
+        if obtido is None:
+            erros.append(f"{caso['caso_id']}: competencia ausente")
+            continue
+        if obtido["veredito"] != caso["veredito_esperado"]:
+            erros.append(f"{caso['caso_id']}: {obtido['veredito']} != {caso['veredito_esperado']}")
+        for coluna, chave in (("linhas_vendas_origem", "linhas_vendas_origem"),
+                              ("pedidos_base_tratada", "pedidos_base_tratada"),
+                              ("excecoes_bloqueantes", "excecoes_bloqueantes")):
+            if int(obtido[chave]) != int(caso[coluna]):
+                erros.append(f"{caso['caso_id']}.{coluna}: {obtido[chave]} != {caso[coluna]}")
+    checar(not erros, f"golden do veredito por competencia ({len(golden_ver)} casos)",
+           "; ".join(erros))
+
+    # 8. cobertura das excecoes esperadas EX-01..07
+    codigos_saida = {e["codigo_excecao"] for e in payload["excecoes"] if e["codigo_excecao"]}
+    codigos_saida |= {linha["codigo_excecao"] for linha in payload["log_tratamento"]
+                      if linha["codigo_excecao"]}
+    esperados = {c["caso"] for c in ler("expected_exceptions.csv")}
+    checar(esperados <= codigos_saida, "EX-01..07 cobertos pelo tratamento",
+           f"ausentes: {sorted(esperados - codigos_saida)}")
+
+    # 9. contrato de colunas: nenhuma coluna nova, nenhum nome de indicador
+    checar(cabecalhos.get("base_tratada_pedidos.csv") == COLUNAS_PEDIDOS_ESPERADAS,
+           "colunas do arquivo de pedidos = contrato declarado, na ordem",
+           f"obtidas: {cabecalhos.get('base_tratada_pedidos.csv')}")
+    checar(cabecalhos.get("base_tratada_visitas.csv") == COLUNAS_VISITAS_ESPERADAS,
+           "colunas do arquivo de visitas = contrato declarado, na ordem",
+           f"obtidas: {cabecalhos.get('base_tratada_visitas.csv')}")
+    checar(set(payload["base_tratada_pedidos"][0]) == set(COLUNAS_PEDIDOS_ESPERADAS),
+           "nenhum campo extra no registro de pedido do JSON",
+           f"extras: {sorted(set(payload['base_tratada_pedidos'][0]) - set(COLUNAS_PEDIDOS_ESPERADAS))}")
+    checar(set(payload["base_tratada_visitas"][0]) == set(COLUNAS_VISITAS_ESPERADAS),
+           "nenhum campo extra no registro de visita do JSON",
+           f"extras: {sorted(set(payload['base_tratada_visitas'][0]) - set(COLUNAS_VISITAS_ESPERADAS))}")
+
+    def chaves(objeto, acumulador):
+        if isinstance(objeto, dict):
+            for chave, valor in objeto.items():
+                acumulador.add(str(chave))
+                chaves(valor, acumulador)
+        elif isinstance(objeto, list):
+            for item in objeto:
+                chaves(item, acumulador)
+        return acumulador
+
+    proibidas = sorted({k for k in chaves(payload, set())
+                        if any(t in k.lower() for t in CHAVES_DE_INDICADOR)})
+    checar(not proibidas, "nenhuma chave de indicador de negocio na saida do tratamento",
+           f"chaves: {proibidas}")
+
+    # 10. verbatim: todo valor monetario da base tratada e copia da fonte
+    vendas = ler("vendas.csv")
+    logistica = {r["pedido_id"].strip().upper(): r for r in ler("custos_logisticos.csv")}
+    divergentes = []
+    for p in payload["base_tratada_pedidos"]:
+        origem = vendas[int(p["linha_origem_vendas"]) - 2]
+        for campo in ("receita_bruta", "desconto", "custo_produto", "data_pedido",
+                      "atualizado_em", "status_pedido"):
+            if str(p[campo]) != origem[campo]:
+                divergentes.append(f"{p['pedido_id']}.{campo}: {p[campo]} != {origem[campo]}")
+        log_origem = logistica[p["pedido_id"]]
+        for campo in ("frete", "custo_manuseio"):
+            if str(p[campo]) != log_origem[campo]:
+                divergentes.append(f"{p['pedido_id']}.{campo}: {p[campo]} != {log_origem[campo]}")
+    checar(not divergentes, "valores da base tratada identicos a fonte (nenhum valor calculado)",
+           "; ".join(divergentes))
+
+    # 11. toda transformacao aplicada tem linha no log
+    ids_normalizados = {p["pedido_id"] for p in payload["base_tratada_pedidos"]
+                        if "id_normalizado" in p["marcas"]}
+    ids_no_log = {linha["id"] for linha in payload["log_tratamento"]
+                  if linha["acao"] == "normalizacao"}
+    checar(ids_normalizados <= ids_no_log, "identificador normalizado registrado no log",
+           f"sem log: {sorted(ids_normalizados - ids_no_log)}")
+    checar(all(linha["regra"] for linha in payload["log_tratamento"]),
+           "toda linha do log cita a regra que a autorizou")
+
+    # 12. origem intocada e saida deterministica
+    checar(hashes_antes == {p.name: sha256(p) for p in sorted(FIXTURES.glob("*.csv"))},
+           "fixtures de origem intocadas pelo tratamento (SHA-256)")
+    checar(arquivos == arquivos2, "duas execucoes produzem bytes identicos em todas as saidas",
+           str(sorted(n for n in arquivos if arquivos[n] != arquivos2.get(n))))
+    checar(payload == payload2, "payload JSON identico entre execucoes")
+    return payload
+
+
+def suite_base_tratada_excel(payload_csv: dict) -> None:
+    print("== Suite 6: base tratada pelo caminho .xlsx ==")
+    try:
+        import openpyxl  # noqa: F401
+    except ImportError:
+        checar(False, "openpyxl disponivel (requirements.txt)",
+               "instale com: python -m pip install --require-hashes -r requirements.txt")
         return
-    golden = ler("golden_cases.csv")
-    checar(len(golden) == 3, "golden_cases.csv preservado (GC-01..03)", f"{len(golden)} caso(s)")
-    print("  PENDENTE (nao aplicavel nesta versao): sem modulo de calculo em src/; "
-          "formulas TRUTH-001..005 aguardam validacao formal da controladoria "
-          "(gate do primeiro /change-number).")
+
+    def recorte(payload):
+        return {
+            "resumo": payload["resumo"],
+            "pedidos": [(p["pedido_id"], p["cliente_id"], p["competencia"], p["receita_bruta"],
+                         p["custo_produto"], p["frete"], p["marcas"]) for p in
+                        payload["base_tratada_pedidos"]],
+            "visitas": [(v["visita_id"], v["classificacao"], v["marcas"]) for v in
+                        payload["base_tratada_visitas"]],
+            "excecoes": [(e["entidade"], e["id"], e["destino"], e["bloqueia_publicacao"],
+                          e["codigo_excecao"]) for e in payload["excecoes"]],
+            "reconciliacao": [(r["bloco"], r["campo"], r["total_origem"],
+                               r["total_base_tratada"], r["diferenca"]) for r in
+                              payload["reconciliacao"]],
+            "veredito": [(v["competencia"], v["veredito"]) for v in payload["veredito_competencia"]],
+        }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        planilha = gerar_xlsx(base)
+        hash_antes = sha256(planilha)
+        payload_xlsx = rodar_base_tratada(base / "saida", entrada=planilha, rotulo="harness_xlsx")
+        checar(sha256(planilha) == hash_antes, "planilha de entrada intocada pela leitura (SHA-256)")
+
+    checar(recorte(payload_xlsx) == recorte(payload_csv),
+           "caminho .xlsx produz a mesma base tratada que o caminho CSV")
+    checar(payload_xlsx["entrada"]["tipo"] == "planilha .xlsx",
+           "entrada .xlsx reconhecida como planilha")
+
+
+def suite_derivabilidade_golden(payload: dict) -> None:
+    """GC-01..03 deriváveis da base tratada — a conta e feita AQUI, nunca em src/."""
+    print("== Suite 7: insumos de GC-01..03 deriveis da base tratada ==")
+    parametros = {r["parametro"]: float(r["valor"]) for r in ler("parametros.csv")}
+    custo_visita = parametros["custo_por_visita_realizada"]
+    custo_pedido = parametros["custo_operacional_por_pedido"]
+
+    agregado = {}
+    for p in payload["base_tratada_pedidos"]:
+        chave = (p["cliente_id"], p["competencia"])
+        item = agregado.setdefault(chave, {"rb": 0.0, "desc": 0.0, "cp": 0.0, "log": 0.0,
+                                           "pedidos": 0, "visitas": 0})
+        item["rb"] += float(p["receita_bruta"])
+        item["desc"] += float(p["desconto"] or 0)
+        item["cp"] += float(p["custo_produto"])
+        item["log"] += float(p["frete"]) + float(p["custo_manuseio"] or 0)
+        item["pedidos"] += 1
+    for v in payload["base_tratada_visitas"]:
+        if v["classificacao"] == "valida":
+            chave = (v["cliente_id"], v["competencia"])
+            agregado.setdefault(chave, {"rb": 0.0, "desc": 0.0, "cp": 0.0, "log": 0.0,
+                                        "pedidos": 0, "visitas": 0})["visitas"] += 1
+
+    erros = []
+    for caso in ler("golden_cases.csv"):
+        item = agregado.get((caso["cliente_id"], caso["mes_ref"]))
+        if item is None:
+            erros.append(f"{caso['caso']}: cliente/mes ausente da base tratada")
+            continue
+        receita_liquida = item["rb"] - item["desc"]
+        contribuicao = receita_liquida - item["cp"] - item["log"]
+        visitas = item["visitas"] * custo_visita
+        pedidos = item["pedidos"] * custo_pedido
+        servir = contribuicao - visitas - pedidos
+        for nome, obtido, esperado in (
+            ("receita_liquida", receita_liquida, float(caso["receita_liquida"])),
+            ("custo_produto", item["cp"], float(caso["custo_produto"])),
+            ("custo_logistico", item["log"], float(caso["custo_logistico"])),
+            ("margem_contribuicao", contribuicao, float(caso["margem_contribuicao"])),
+            ("custo_visitas", visitas, float(caso["custo_visitas"])),
+            ("custo_pedidos", pedidos, float(caso["custo_pedidos"])),
+            ("margem_servir", servir, float(caso["margem_servir"])),
+        ):
+            if abs(obtido - esperado) > 0:                      # tolerancia R$ 0,00
+                erros.append(f"{caso['caso']}.{nome}: {obtido} != {esperado}")
+    checar(not erros, "GC-01..03 reproduzidos a partir da base tratada (tolerancia R$ 0,00)",
+           "; ".join(erros))
+    checar(len(ler("golden_cases.csv")) == 3, "golden_cases.csv preservado (GC-01..03)")
 
 
 def main() -> int:
@@ -458,7 +854,10 @@ def main() -> int:
         payload = rodar_diagnostico(saida, rotulo="harness_textos")
         markdown = (saida / "diagnostico_harness_textos.md").read_text(encoding="utf-8")
     suite_textos(payload, markdown)
-    suite_margens()
+    suite_inventario_modulos()
+    payload_bt = suite_base_tratada()
+    suite_base_tratada_excel(payload_bt)
+    suite_derivabilidade_golden(payload_bt)
     if falhas:
         print(f"\nRESULTADO: {len(falhas)} falha(s) — {falhas}")
         return 1
