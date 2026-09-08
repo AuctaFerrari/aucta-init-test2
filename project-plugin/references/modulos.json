@@ -17,6 +17,14 @@
       "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
       "testes": "tests/golden/run_fase2.py",
       "justificativa": "Fase 2 do plano aprovado: normaliza identificador, preserva o bruto e trata colisao conforme DN-11, com DN-13 para competencia inutilizavel. Nao monta base tratada, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/versao_pedido.py",
+      "categoria": "versao",
+      "decisao": "DN-14",
+      "golden": "tests/fixtures/golden/fase3/versao_pedido.csv",
+      "testes": "tests/golden/run_fase3.py",
+      "justificativa": "Fase 3 do plano aprovado: agrupa versoes pelo pedido_id normalizado (DN-11) e escolhe a versao vigente por TRUTH-011, com DN-04 para empate e DN-14 para timestamp inutilizavel. Nao filtra situacao de pedido, nao monta base tratada, nao reconcilia e nao calcula."
     }
   ]
 }
