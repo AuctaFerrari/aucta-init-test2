@@ -1,0 +1,13 @@
+cenario,campo,unidade,origem,vigente,versao_substituida,quarentena,vazios_origem,diferenca,situacao
+BASE,linhas,contagem,13,12,1,0,0,0,ok
+BASE,receita_bruta,BRL,11950.00,11450.00,500.00,0.00,0,0.00,ok
+BASE,desconto,BRL,940.00,890.00,50.00,0.00,0,0.00,ok
+BASE,custo_produto,BRL,5960.00,5710.00,250.00,0.00,1,0.00,ok
+A3,linhas,contagem,13,11,0,2,0,0,ok
+A3,receita_bruta,BRL,11950.00,10950.00,0.00,1000.00,0,0.00,ok
+A3,desconto,BRL,940.00,840.00,0.00,100.00,0,0.00,ok
+A3,custo_produto,BRL,5960.00,5450.00,0.00,510.00,1,0.00,ok
+A6,linhas,contagem,13,11,0,2,0,0,ok
+A6,receita_bruta,BRL,11950.00,10950.00,0.00,1000.00,0,0.00,ok
+A6,desconto,BRL,940.00,840.00,0.00,100.00,0,0.00,ok
+A6,custo_produto,BRL,5960.00,5450.00,0.00,510.00,1,0.00,ok
