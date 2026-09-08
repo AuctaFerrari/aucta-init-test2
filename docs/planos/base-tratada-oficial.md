@@ -29,7 +29,7 @@ O cálculo de margens usa as fórmulas TRUTH-001..005, agora aprovadas, mas depe
 | --- | --- | --- | --- |
 | 1 | Referência de conferência do tratamento | Arquivo com a base tratada esperada e a quarentena esperada, calculadas **fora** do programa que será construído — a resposta existe antes do código | **concluída** — golden derivados de forma independente em `tests/fixtures/golden/base-tratada/`, cobrindo a fixture atual e cinco cenários adversariais |
 | 2 | Identificadores padronizados | Cada identificador corrigido aparece no log com valor anterior → valor novo e a regra que autorizou | **concluída** — `src/identificadores.py` com DN-11 e DN-13, conferido por `tests/golden/run_fase2.py` (7 suites) e pela guarda 4b do CI |
-| 3 | Versão que vale de cada pedido | Para cada pedido repetido, qual versão entrou, qual foi descartada e por quê | não iniciada |
+| 3 | Versão que vale de cada pedido | Para cada pedido repetido, qual versão entrou, qual foi descartada e por quê | **concluída** — `src/versao_pedido.py` com TRUTH-011, DN-04 e DN-14, conferido por `tests/golden/run_fase3.py` (7 suites) e pela guarda 4c do CI |
 | 4 | Pedidos que não entram | Duas listas separadas: excluídos por regra (cancelados) e retidos por falta de informação (quarentena), cada um com o motivo e o código da exceção | não iniciada |
 | 5 | Base tratada oficial e visitas válidas | A base tratada em si, com os dados do cliente já cruzados, e as visitas classificadas em válida / não realizada / exceção | não iniciada |
 | 6 | Reconciliação e relatório de tratamento | Prova de que fonte bruta = base tratada + excluídos + quarentena + fora do período, em contagem e em reais (diferença R$ 0,00), mais o relatório legível pela controladoria | não iniciada |
@@ -79,6 +79,64 @@ exit=1
 **Nada de valor aprovado mudou.** `custo_por_visita_realizada` segue em **R$ 100,00** em `.project/PARAMETERS.md`, com o status observado `Provisório` preservado em `tests/fixtures/parametros.csv`; GC-01 (R$ 330,00), GC-02 (R$ 120,00) e GC-03 (R$ 400,00) e a tolerância R$ 0,00 seguem intocados; as cinco fixtures de origem seguem byte-idênticas à `main`.
 
 **Efeito medido da fase 2, sem calcular margem:** pedidos sem correspondência no cadastro passam de 2 (O004, O010) para 1 (O010); C003 em 2026-01 passa de 2 para 3 linhas de pedido vinculadas; 1 normalização aplicada (O004: `" c003 "` → `C003`); nenhuma colisão na fixture atual.
+
+## Evidência da fase 3 — versão que vale de cada pedido
+
+**Decisão nova aprovada antes do código.** DN-14 (`atualizado_em` inutilizável em grupo duplicado) foi aprovada pelo dono do número, com papel fictício explicitamente ativado, em [issuecomment-5590561870](https://github.com/AuctaFerrari/aucta-init-test2/issues/10#issuecomment-5590561870). `GATE-CN-01` foi reaberto e refechado, agora cobrindo DN-01 a DN-14.
+
+**Testes antes do código.** A conferência foi commitada primeiro e reprovou pelo motivo esperado, verbatim:
+
+```
+Conferencia da fase 3 (versao que vale de cada pedido)
+  FALHA: modulo de producao ausente: src/versao_pedido.py
+RESULTADO: 1 falha — implementacao da fase 3 ainda nao existe
+exit=1
+```
+
+**Falha inicial da guarda 4**, com o módulo novo presente e sem registro no inventário:
+
+```
+FALHA: todo modulo de src/ esta registrado no inventario do projeto —
+nao registrados: ['src/versao_pedido.py']
+```
+
+Resolvida pelo registro estreito do módulo e da suíte exatos, sem categoria de cálculo e sem afrouxar exigência. Provas negativas reexecutadas, todas reprovando: módulo não registrado; categoria proibida; suíte retirada do inventário; caminho alterado sem atualizar o inventário. **KI-001 segue aberta.**
+
+**O006 — resultado.** Vence a linha 8, `atualizado_em 2026-01-21 14:30`, com **`custo_produto` 260**. A linha 7 vira `versao_substituida` preservando `atualizado_em 2026-01-20 08:00` e `custo_produto 250` **verbatim**, com motivo e regra TRUTH-011. Conservação: 13 linhas = 12 vigentes + 1 substituída + 0 em quarentena; receita bruta R$ 11.950,00 = R$ 11.450,00 + R$ 500,00; custo de produto R$ 5.960,00 = R$ 5.710,00 + R$ 250,00. Diferença **R$ 0,00**.
+
+**A3 — empate (DN-04).** As duas versões de O006 vão para quarentena, **nenhuma vencedora é escolhida**, e **2026-01 é bloqueada**. Nenhuma versão substituída é produzida.
+
+**A6 — timestamp inutilizável (DN-14).** As duas versões vão para quarentena, nenhuma vencedora, **2026-01 bloqueada**, e a versão de timestamp inválido carrega **dois motivos separados** (ambiguidade de duplicata e timestamp inutilizável) contra **um único** motivo na versão de timestamp válido. Em A3 e A6 a conservação é 13 = 11 + 0 + 2, com R$ 1.000,00 de receita bruta e R$ 510,00 de custo de produto em quarentena, diferença **R$ 0,00**.
+
+**Casos cobertos além do golden:** duplicata atravessando duas competências → **ambas** bloqueadas; pedido não duplicado com `atualizado_em` ausente → **permanece vigente**, com aviso não bloqueante citando DN-14, sem bloquear a competência.
+
+**Independência da ordem do arquivo.** Inverter a ordem das linhas de `vendas.csv` produz recorte semântico **byte a byte idêntico** — vigentes, substituídas, quarentena, competências bloqueadas e conservação. A escolha é por valor de timestamp, nunca por posição.
+
+**CI final em clone limpo: exit 0, 164 verificações.**
+
+**Commits da fase 3, na ordem lógica:**
+
+| Commit | Conteúdo |
+| --- | --- |
+| `1478e0d` | `.project/DECISIONS.md` — DN-14 e `GATE-CN-01` refechado |
+| `8795cc5` | README de procedência do golden da fase 3 |
+| `155b4cd` | A6 e as três referências esperadas, antes do código |
+| `7f7817e` | `tests/golden/run_fase3.py` — testes antes do código |
+| `fddf813` | guarda 4c no CI |
+| `43dccea` | suíte da fase 2: exaustividade passa a vir do inventário |
+| `5f1dc54` | registro estreito do módulo no inventário |
+| `e81b00d` | `src/versao_pedido.py` — implementação mínima |
+
+**Nenhum comportamento das fases 4 a 7.** A suíte G confere: nenhuma chave de fase posterior na saída; regras restritas a TRUTH-011, DN-04, DN-11 e DN-14; `src/` com exatamente os três módulos autorizados; e o código sem menção a `Cancelado`, `frete`, `custo_manuseio`, `data_realizada` ou `margem`.
+
+**Nada de valor aprovado mudou.** `custo_por_visita_realizada` segue em **R$ 100,00**; GC-01 (R$ 330,00), GC-02 (R$ 120,00), GC-03 (R$ 400,00) e a tolerância R$ 0,00 intocados; as cinco fixtures de origem byte-idênticas à `main`.
+
+**Desvios de processo registrados — EF-004.** Dois eventos, ambos do agente, ambos em `.project/init-state.md`:
+
+1. A documentação desta fase **não foi fechada no mesmo turno** da implementação, contra exigência explícita e anterior ao trabalho.
+2. Durante a publicação da recuperação, **três edições corretas mas não validadas localmente** entraram em `project-plugin/references/pointers.md` (intervalo de exceções formais, status das fases e intervalo de cenários adversariais).
+
+Em nenhum dos dois casos houve autorização prévia: o owner técnico autorizou a **recuperação**, não o desvio. O conteúdo publicado de `pointers.md` foi **aceito como canônico** no commit **`79e909f`**, de forma prospectiva e limitada àquelas três correções de metadado — a aceitação não valida retroativamente a prática de editar dentro da chamada de publicação.
 
 ## Fluxo antes → depois
 
@@ -153,7 +211,7 @@ DN-01 a DN-13 aprovadas item a item pelo dono do número, com a ordem de avalia�
 
 ## Nota sobre a guarda de módulos (KI-001)
 
-A fase 2 adicionará o primeiro módulo não observacional a `src/`. A guarda 4 do CI reprova, por desenho, qualquer módulo novo — e a limitação registrada em KI-001 é que ela olha **nome de arquivo**, não comportamento. O tratamento previsto: declarar o novo módulo com a sua categoria, manter a proibição de módulo de **cálculo** e cobrir o módulo novo com conferência **comportamental** (contrato de colunas fechado, nenhuma chave de indicador, todo valor conferido contra a fonte). A correção estrutural da guarda segue como demanda do `aucta-dev-core`, e a guarda não será enfraquecida para o código passar.
+As fases 2 e 3 adicionaram os dois primeiros módulos não observacionais a `src/`, e em cada uma a guarda 4 reprovou por desenho — falha demonstrada e preservada nas duas vezes. Tratamento aplicado: allowlist de nomes aposentada, registro estreito no nível do projeto em `project-plugin/references/modulos.json` com categoria, decisão aprovada, golden e suite por módulo, categorias de cálculo proibidas no harness e não no inventário, e conferência **comportamental** por suite própria de cada fase. A guarda **não** foi enfraquecida em nenhuma das duas fases, e **KI-001 segue aberta**: registro de módulo não é verificação de comportamento. Correção estrutural: issue **#27** do `aucta-dev-core`.
 
 ## Próximo ciclo (fora deste PR)
 
