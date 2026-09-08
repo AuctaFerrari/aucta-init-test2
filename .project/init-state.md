@@ -93,9 +93,24 @@ O gate **reabre** se qualquer regra aprovada mudar: item novo exige aprovação 
 
 `feat/base-tratada-oficial-clean`, criado a partir da `main` em **`a1a0390`**. O commit 1 (`890dfac`) rematerializa o plano aprovado com **blob idêntico** ao de `4463f95` (`8cd4ed87c3bfc0fb7407c3ca1145f232c4d275df`), conferido byte a byte; o commit original permanece como procedência. O ramo **não** descende de `4463f95` — o conector não cria ramo a partir de commit arbitrário — e isso está declarado no corpo do commit.
 
-- **Fase 1 do plano: CONCLUÍDA.** **Fases 2 a 7: não iniciadas.**
-- **Nenhum código de produção** e **nenhuma alteração no harness**: `src/` e `tests/golden/run_golden.py` são byte-idênticos à `main` (harness em `5bceede`).
-- CI verde no ramo limpo: **46 verificações**, mesmo total da `main`.
+- **Fase 1 do plano: CONCLUÍDA.** **Fase 2: CONCLUÍDA** (2026-09-08). **Fases 3 a 7: não iniciadas.**
+- CI verde no ramo limpo: **109 verificações** (46 do harness principal + 63 da conferência da fase 2), exit 0 em clone independente.
+
+### Fase 2 — identificadores padronizados (2026-09-08)
+
+Head do ramo limpo ao fim da fase 2: **`7cbd3c7`**; com a documentação desta fase, o head avança nos commits de doc.
+
+**Escopo implementado, e nada além:** normalização conforme DN-11 (espaço externo removido, maiúsculas, espaço interno e pontuação preservados, sem inferência de prefixo ou zero à esquerda), identificador bruto preservado em campo separado, log com valor anterior → valor novo e a regra, detecção de colisão entre brutos distintos que normalizam para o mesmo valor, quarentena de todo registro afetado com bloqueio de cada competência determinável e, quando o impacto não é delimitável (DN-13), falha controlada com exit 5, artefato auditável e nenhuma saída oficial.
+
+**Fora de escopo, deliberadamente ausente:** escolha de versão entre registros repetidos, lista branca de situação de pedido, quarentena por informação faltante, base tratada, reconciliação e qualquer cálculo. Nenhum parâmetro econômico é lido.
+
+**Testes primeiro.** `tests/golden/run_fase2.py` foi commitado antes do código e reprovou pelo motivo esperado (`modulo de producao ausente: src/identificadores.py`, exit 1). Sete suites hoje verdes, incluindo colisão delimitável no cenário A2 (6 registros afetados e competências 2026-01 e 2026-03 conferidos contra o golden) e colisão sem delimitação no A5 (exit 5, sem saída oficial, DN-13 citada).
+
+**Guarda 4 / KI-001.** A allowlist `MODULOS_OBSERVACIONAIS`, que vivia no arquivo de teste, foi **aposentada**. Em vigor: registro estreito no nível do projeto em `project-plugin/references/modulos.json`, com caminho, categoria, decisão aprovada, golden e suite por módulo; categorias proibidas ficam no harness, de modo que registrar um módulo nunca autoriza módulo de cálculo. Falha inicial da guarda demonstrada e preservada; cinco provas negativas registradas. **KI-001 segue ABERTA:** registro de módulo não é verificação de comportamento, e o inventário não impede cálculo embutido. Correção estrutural continua sendo a issue **#27** do `aucta-dev-core`.
+
+**Nada de valor aprovado mudou.** `custo_por_visita_realizada` segue em **R$ 100,00**; as cinco fixtures de origem seguem byte-idênticas à `main`, inclusive `parametros.csv` com o status observado `Provisório`; GC-01..03 e a tolerância R$ 0,00 intocados. Uma proposta de alterar o custo por visita para R$ 120,00 como "detalhe de implementação" foi **rejeitada** e não aparece em nenhum artefato.
+
+**Efeito medido, sem calcular margem:** pedidos sem correspondência no cadastro caem de 2 (O004, O010) para 1 (O010); C003 em 2026-01 passa de 2 para 3 linhas de pedido vinculadas; 1 normalização aplicada; nenhuma colisão na fixture atual.
 
 ### Fixtures de origem preservadas
 
@@ -169,6 +184,8 @@ Estágios lógicos pedidos: plano → governança → golden. Commits físicos: 
 ## Retomada
 
 - Iniciação CONCLUÍDA. **GATE-CN-01 fechado**: as regras, os golden e a tolerância do tratamento e do cálculo têm aprovação funcional registrada.
-- Fase 1 do ciclo da base tratada **concluída** no ramo `feat/base-tratada-oficial-clean` (head atual `d1611ff` + este commit de estado): governança materializada (DECISIONS, PARAMETERS, TRUTHS refinadas, ACCEPTANCE, TEST_STRATEGY, plano aprovado) e golden do tratamento derivados de forma independente antes de qualquer código.
-- **Próximo passo, aguardando autorização explícita: fase 2 do plano** — identificadores padronizados, primeira etapa de implementação. Nenhum código de produção existe no ramo limpo, e nada pode ser reaproveitado do ramo contaminado.
-- Bloqueadores conhecidos antes da fase 2: nenhum de negócio. Restam apenas os gates de recomendação (Ana Martins) e de release, que não bloqueiam a fase 2, e a decisão sobre quando publicar a demanda de prevenção da EF-003 no `aucta-dev-core`.
+- Fases 1 e 2 do ciclo da base tratada **concluídas** no ramo `feat/base-tratada-oficial-clean`: governança materializada (DECISIONS, PARAMETERS, TRUTHS refinadas, ACCEPTANCE, TEST_STRATEGY, plano aprovado), golden do tratamento derivados de forma independente antes de qualquer código, e identificadores padronizados implementados com conferência própria.
+- **`GATE-CN-01` permanece FECHADO** para o conjunto de regras aprovado. Nenhuma decisão de negócio nova foi tomada na fase 2.
+- **Próximo passo, aguardando autorização explícita: fase 3 do plano** — versão que vale de cada pedido (TRUTH-011 com DN-04). **Não iniciada.** Nada pode ser reaproveitado do ramo contaminado, que segue em `5c02e59` como evidência forense, não conforme e inelegível para PR e merge.
+- Bloqueadores antes da fase 3: nenhum de negócio. Restam os gates de recomendação (Ana Martins) e de release, que não bloqueiam a fase 3.
+- Nenhum PR foi aberto em nenhum momento deste ciclo.
