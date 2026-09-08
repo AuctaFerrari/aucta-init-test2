@@ -25,6 +25,14 @@
       "golden": "tests/fixtures/golden/fase3/versao_pedido.csv",
       "testes": "tests/golden/run_fase3.py",
       "justificativa": "Fase 3 do plano aprovado: agrupa versoes pelo pedido_id normalizado (DN-11) e escolhe a versao vigente por TRUTH-011, com DN-04 para empate e DN-14 para timestamp inutilizavel. Nao filtra situacao de pedido, nao monta base tratada, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/pedidos_nao_entram.py",
+      "categoria": "tratamento_pedidos",
+      "decisao": "DN-06",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase4.py",
+      "justificativa": "Fase 4: classifica cada pedido entre candidato a base tratada, exclusao documentada, quarentena e fora do periodo. Nao classifica visitas, nao reconcilia e nao calcula."
     }
   ]
 }
