@@ -6,7 +6,7 @@ Ordem de leitura na abertura de sessão (6.5): PROJECT.md + TRUTHS.md + Issue/Sp
 | --- | --- | --- |
 | PROJECT.md | `/PROJECT.md` | Objetivo, escopo, tier 2, arquitetura, mapa |
 | TRUTHS.md | `/TRUTHS.md` | Fórmulas e regras vigentes (TRUTH-001..015). Não duplica decisões nem parâmetros |
-| DECISIONS.md | `/.project/DECISIONS.md` | **DN-01..DN-13** — regras operacionais aprovadas pelo dono do número, ordem de avaliação, esclarecimentos I-01..I-04, definição de `GATE-CN-01`, mapeamento dos identificadores DEC antigos |
+| DECISIONS.md | `/.project/DECISIONS.md` | **DN-01..DN-14** — regras operacionais aprovadas pelo dono do número, ordem de avaliação, esclarecimentos I-01..I-04 e definição de `GATE-CN-01` |
 | PARAMETERS.md | `/.project/PARAMETERS.md` | Índice canônico de parâmetros (D11): valor, unidade, fonte, owner, status, escopo, vigência e regra para valor ausente ou expirado. Nenhum cálculo pode usar parâmetro que não esteja aqui |
 | GLOSSARY.md | `/GLOSSARY.md` | Termos do cliente (margem de servir, clientes-alerta…) |
 | ACCEPTANCE.md | `/ACCEPTANCE.md` | ACC-001..007, registro de aprovação dos golden e da tolerância, definição de pronto |
@@ -14,7 +14,7 @@ Ordem de leitura na abertura de sessão (6.5): PROJECT.md + TRUTHS.md + Issue/Sp
 | DATA_CATALOG.md | `/.project/DATA_CATALOG.md` | Fonte única + armadilhas de qualidade mapeadas |
 | Known issues | `/.project/KNOWN_ISSUES.md` | KI-001 — guarda de módulos por nome de arquivo |
 | Estado do /init | `/.project/init-state.md` | Progresso, premissas, blockers, `GATE-CN-01`, exceções formais EF-002 a EF-004 |
-| Plano aprovado do ciclo | `/docs/planos/base-tratada-oficial.md` | Plano Visual Faseado de **sete fases**, aprovado prospectivamente em 2026-09-08. Fases 1 a 3 concluídas; fases 4 a 7 não iniciadas |
+| Plano aprovado do ciclo | `/docs/planos/base-tratada-oficial.md` | Plano Visual Faseado de **sete fases**, aprovado prospectivamente em 2026-09-08. Fases 1 a 7 concluídas no ramo limpo |
 | Fixtures de origem | `/tests/fixtures/*.csv` | Massa sintética oficial (jan–mar/2026) — **imutáveis**, inclusive `parametros.csv` com o status observado da fonte |
 | Golden cases de margem | `/tests/fixtures/golden_cases.csv` | GC-01..03 — margens esperadas, tolerância R$ 0,00, aprovados em 2026-09-08 |
 | Exceções esperadas | `/tests/fixtures/expected_exceptions.csv` | EX-01..07 — tratamento e escopo do bloqueio |
@@ -29,6 +29,13 @@ Ordem de leitura na abertura de sessão (6.5): PROJECT.md + TRUTHS.md + Issue/Sp
 | Conferência da fase 3 | `/tests/golden/run_fase3.py` | 7 suites; guarda 4c do CI |
 | Golden da fase 3 | `/tests/fixtures/golden/fase3/` | `versao_pedido.csv`, `conservacao.csv`, `veredito.csv` e `README.md` com procedência. Cenários BASE, A3 e A6 |
 | Entrada adversarial A6 | `/tests/fixtures/adversarial/A6/` | Grupo duplicado com `atualizado_em` inutilizável — cobre DN-14 |
+| Módulo da fase 4 | `/src/pedidos_nao_entram.py` | Classificação de pedidos: base, exclusão, quarentena e fora do período |
+| Conferência da fase 4 | `/tests/golden/run_fase4.py` | Destinos e bloqueios contra o golden congelado |
+| Módulo da fase 5 | `/src/base_tratada.py` | População oficial de pedidos e classificação de visitas |
+| Conferência da fase 5 | `/tests/golden/run_fase5.py` | 147 casos de BASE e A1–A5 |
+| Módulo da fase 6 | `/src/relatorio_tratamento.py` | Sete artefatos, reconciliação e veredito por competência |
+| Conferência da fase 6 | `/tests/golden/run_fase6.py` | 54 linhas de reconciliação e 18 vereditos |
+| Conferência da fase 7 | `/tests/golden/run_fase7.py` | Determinismo, CSV/Excel, integridade, diagnóstico e derivabilidade de GC-01..03 |
 | CI harness | `/.github/ci/run-checks.sh` | Guardas: artefatos, dados fora de fixtures, sintaxe, dependências, golden |
 
 ## Aprovações válidas na Issue #10
@@ -49,11 +56,11 @@ Aprovação de negócio exige: aprovador nomeado em `OWNERS.md` (ou papel fictí
 | --- | --- |
 | Guarda de módulos de cálculo por nome de arquivo (KI-001) | issue **#27**, aberta |
 | Gate de aprovação aceita artefato sem validar autoridade e procedência (EF-003) | issue **#28**, aberta — https://github.com/AuctaFerrari/aucta-dev-core/issues/28 |
-| Conferência de bytes/hash de artefato rematerializado | rascunho, **não publicada** |
+| Publicação por retranscrição diverge do artefato validado | issue **#29**, aberta — https://github.com/AuctaFerrari/aucta-dev-core/issues/29 |
 
 ## Ramo contaminado — nunca como fonte de implementação
 
-`feat/base-tratada-oficial`, head **`5c02e59`**: preservado **exclusivamente como evidência forense** da EF-003. Não é retroativamente conforme, é inelegível para PR e merge, e **não pode ser lido, copiado, diferenciado, cherry-picked, importado ou adaptado** como fonte de código, harness ou golden. As TRUTH-016..020 gravadas nele não são decisões aprovadas.
+`feat/base-tratada-oficial`, head **`5c02e59`**: preservado **exclusivamente como evidência forense** da EF-003. Não é retroativamente conforme, é inelegível para PR e merge, e **não pode voltar a ser lido, copiado, diferenciado, cherry-picked, importado ou adaptado** como fonte de código, harness ou golden. Uma leitura indevida ocorreu antes da fase 4 e está registrada como EF-005; ela não autorizou reaproveitamento. As TRUTH-016..020 gravadas nele não são decisões aprovadas.
 
 Ramo de trabalho da recuperação: `feat/base-tratada-oficial-clean`, a partir da `main` em `a1a0390`.
 
