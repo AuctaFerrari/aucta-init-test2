@@ -66,4 +66,68 @@ else
   echo "ok: sem código sob teste ainda"
 fi
 
+echo "== 4b. Conferência da fase 2 — identificadores (DN-11) =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase2.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase2.py || { echo "FALHA: conferência da fase 2 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase2.py ausente — a fase 2 está registrada no inventário de módulos"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
+echo "== 4c. Conferência da fase 3 — versão que vale de cada pedido (TRUTH-011, DN-04, DN-14) =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase3.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase3.py || { echo "FALHA: conferência da fase 3 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase3.py ausente — a fase 3 está registrada no inventário de módulos"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
+echo "== 4d. Conferência da fase 4 — pedidos que não entram =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase4.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase4.py || { echo "FALHA: conferência da fase 4 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase4.py ausente — a fase 4 está registrada no plano"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
+echo "== 4e. Conferência da fase 5 — base tratada oficial e visitas =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase5.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase5.py || { echo "FALHA: conferência da fase 5 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase5.py ausente — a fase 5 está registrada no plano"
+    fail=1
+  fi
+fi
+
+echo "== 4f. Conferência da fase 6 — reconciliação e relatório =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase6.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase6.py || { echo "FALHA: conferência da fase 6 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase6.py ausente — a fase 6 está registrada no plano"
+    fail=1
+  fi
+fi
+
+echo "== 4g. Conferência independente da fase 7 =="
+if [ -f tests/golden/run_fase7.py ]; then
+  "$PY_HARNESS" tests/golden/run_fase7.py || { echo "FALHA: conferência independente da fase 7 não passou"; fail=1; }
+else
+  echo "FALHA: tests/golden/run_fase7.py ausente — a fase 7 está registrada no plano"
+  fail=1
+fi
+
 exit $fail

@@ -1,0 +1,10 @@
+cenario,competencia,veredito,escopo,motivo
+BASE,2026-01,liberada,competencia,nenhuma ambiguidade de versao
+BASE,2026-02,liberada,competencia,nenhuma ambiguidade de versao
+BASE,2026-03,liberada,competencia,nenhuma ambiguidade de versao
+A3,2026-01,bloqueada,competencia,ambiguidade de versao nesta competencia
+A3,2026-02,liberada,competencia,nenhuma ambiguidade de versao
+A3,2026-03,liberada,competencia,nenhuma ambiguidade de versao
+A6,2026-01,bloqueada,competencia,ambiguidade de versao nesta competencia
+A6,2026-02,liberada,competencia,nenhuma ambiguidade de versao
+A6,2026-03,liberada,competencia,nenhuma ambiguidade de versao

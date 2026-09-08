@@ -7,3 +7,5 @@
 - `requirements.txt`: dependência de leitura Excel com versão fixa e hash verificado, instalada pelo CI.
 - Relatório separa achados que exigem atenção (`D-###`) de perfil/inventário da fonte (`P-###`), com contadores independentes.
 - Projeto criado a partir do template aucta-template-projeto.
+- Base tratada oficial em sete fases: normalização, versão vigente, classificação de pedidos e visitas, quarentena, exclusões, reconciliação em cinco populações e veredito por competência.
+- Suites faseadas contra 147 casos de população, 54 linhas de reconciliação e 18 vereditos, além de determinismo, paridade CSV/Excel, integridade da origem e derivabilidade de GC-01..03.

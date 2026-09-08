@@ -1,41 +1,73 @@
 # Estratégia de testes — Aucta Foods · Rentabilidade por Cliente (tier 2)
 
-Materializa o bloco K de ACCEPTANCE.md. Golden cases fornecidos pelo consultor no briefing e conferidos por **recomputação manual independente** (2026-09-03) — nunca pelo pipeline que será desenvolvido.
+Materializa o bloco K de ACCEPTANCE.md. Princípio permanente: **toda suite recomputa a referência por implementação INDEPENDENTE do código sob teste**, a partir de `tests/fixtures/*.csv`. Valor esperado nunca é gerado pelo pipeline que ele verifica.
 
-## Golden cases (tests/fixtures/golden_cases.csv)
+## Política decimal e de arredondamento (DN-09, aprovada)
+
+- Aritmética **decimal**, nunca ponto flutuante binário, em todo cálculo monetário de negócio.
+- **Precisão integral** nos cálculos intermediários.
+- Arredondamento **somente** no resultado final por cliente/mês e nos totais de reconciliação: **duas casas decimais**, política **`ROUND_HALF_UP`**.
+- Contagens permanecem inteiras.
+- **Tolerância absoluta R$ 0,00** para os golden sintéticos, aplicada **após** essa política. Aprovada por Bruno Lima em 2026-09-08 (Issue #10, issuecomment-5589411324).
+
+## Golden de margem (`tests/fixtures/golden_cases.csv`)
 
 | Caso | Cliente/Mês | Margem de servir esperada |
 | --- | --- | --- |
-| GC-01 | C001 / jan-2026 | R$ 330 |
-| GC-02 | C002 / jan-2026 | R$ 120 |
-| GC-03 | C003 / jan-2026 | R$ 400 |
+| GC-01 | C001 / jan-2026 | R$ 330,00 |
+| GC-02 | C002 / jan-2026 | R$ 120,00 |
+| GC-03 | C003 / jan-2026 | R$ 400,00 |
 
-Colunas intermediárias (receita líquida, MC, custos) também são conferidas — o caso falha em qualquer etapa divergente, não só no total.
+Colunas intermediárias (receita líquida, MC, custos) também são conferidas — o caso falha em qualquer etapa divergente, não só no total. Os três valores embutem os parâmetros de `.project/PARAMETERS.md` (R$ 100,00/visita válida e R$ 20,00/pedido válido) e dependem de TRUTH-011 (versão vigente de O006) e TRUTH-015/DN-11 (normalização de O004): mudar qualquer um deles muda GC-01..03.
 
-**Tolerância:** R$ 0,00 (valores 100% deriváveis das fórmulas TRUTH-001..005 sobre a massa sintética). Aprovação formal da tolerância e dos casos: Bruno Lima (Controladoria) — **pendente**; gate antes do merge do primeiro /change-number.
+## Golden do tratamento (`tests/fixtures/golden/base-tratada/`)
 
-## Exceções esperadas (tests/fixtures/expected_exceptions.csv)
+Materializados **antes** da implementação, por derivação independente one-off fora do repositório, a partir do texto das regras aprovadas. Três arquivos:
 
-EX-01..07: dedupe O006 (fica custo 260), exclusão O005, normalização " c003 ", órfão O010/C999, nulos O008/O009, visita V008 sem data. **EX-04, EX-05 e EX-06 bloqueiam a publicação do relatório** enquanto não tratadas.
+- `populacao.csv` — destino esperado de cada linha de Vendas e Visitas, por cenário: `base_tratada`, `excluido_regra`, `quarentena`, `fora_do_periodo`, `valida`, `nao_realizada`, `excecao_reportada`; com regra, sinal de bloqueio, escopo do bloqueio e marcas.
+- `reconciliacao.csv` — conservação por bloco e campo, em **cinco populações**: origem = tratada + excluída + quarentena + fora do período. Diferença esperada R$ 0,00.
+- `veredito.csv` — veredito por competência: `publicavel`, `bloqueada` ou `falha_execucao`, com escopo e motivo.
 
-## Harness (tests/golden/run_golden.py — criado em 2026-09-04, com o primeiro código)
+Cenários cobertos:
 
-Princípio permanente: toda suite recomputa a referência por implementação INDEPENDENTE do código sob teste, a partir de `tests/fixtures/*.csv`.
+| Cenário | Natureza | Regra exercitada |
+| --- | --- | --- |
+| BASE | fixture atual | fluxo completo com as exceções conhecidas EX-01..07 |
+| A1 | adversarial | DN-08 — registro fora do período, excluído da saída oficial, reconciliado à parte, não bloqueante |
+| A2 | adversarial | DN-11 — colisão de identificador delimitável: quarentena dos afetados, bloqueio das competências |
+| A3 | adversarial | DN-04 — empate de `atualizado_em`: todas as versões em quarentena, competência bloqueada |
+| A4 | adversarial | DN-07 + TRUTH-014 (I-01) — visita órfã sem data usável: dois defeitos reportados, período inteiro bloqueado |
+| A5 | adversarial | DN-13 + DN-11 — competência inutilizável e colisão não delimitável: falha controlada de execução |
 
-**Suite 1 — Diagnóstico da fonte (observacional) — IMPLEMENTADA.** Recomputa contagens por tabela, vazios por coluna, identificadores duplicados e chaves sem correspondência; confere que cada exceção conhecida (EX-01..07) aparece na saída; prova que nada foi tratado (13 registros de vendas lidos, duplicata O006 preservada); confere determinismo (duas execuções, bytes idênticos) e integridade da origem (SHA-256 antes/depois); confere que nenhum campo de indicador de negócio existe na saída e que a separação atenção/perfil está correta (contadores independentes, prefixos D-/P-).
+As entradas adversariais vivem em `tests/fixtures/adversarial/<cenario>/`, como sobreposições das tabelas alteradas. As **cinco fixtures de origem são imutáveis** e não são tocadas por nenhum cenário.
 
-**Suite 2 — Caminho `.xlsx` (entrada principal de produção) — IMPLEMENTADA.** Gera a fixture `.xlsx` durante o teste a partir das CSVs versionadas (uma aba por arquivo, mesma ordem), executa o **mesmo entrypoint de produção** sobre ela e exige resultado idêntico ao caminho CSV: contagens, achados de atenção, itens de perfil, relacionamentos, esquema e perfis de coluna. Confere também que o `.xlsx` não é alterado pela leitura (SHA-256 antes/depois) e que duas execuções sobre o mesmo arquivo produzem bytes idênticos. Os bytes do `.xlsx` gerado variam entre execuções (o formato é um zip com metadados de tempo), por isso a comparação é de **conteúdo do diagnóstico**, nunca de hash do arquivo. A dependência de leitura está declarada em `requirements.txt` com versão fixa e hash verificado (`openpyxl==3.1.5`), instalada pelo CI na guarda 3b com `--require-hashes`; **sem ela a suite reprova** — ausência de dependência não vira teste silenciosamente pulado.
+## Exceções esperadas (`tests/fixtures/expected_exceptions.csv`)
 
-**Suite 3 — Margens / golden cases (GC-01..03) — PENDENTE.** Não implementada enquanto não existir módulo de cálculo: as fórmulas TRUTH-001..005 aguardam validação formal da controladoria (gate do primeiro `/change-number`). A suite **falha de propósito** se aparecer em `src/` qualquer módulo fora da lista observacional declarada no harness. Quando implementada, deve cobrir:
+EX-01..07: dedupe O006 (fica custo 260), exclusão O005, normalização `" c003 "`, órfão O010/C999, nulos O008/O009, visita V008 sem data. **EX-04, EX-05 e EX-06 bloqueiam a competência afetada** (fev/2026), não o relatório inteiro — escopo de DN-10.
 
-1. Comparação com golden_cases.csv (tolerância R$ 0,00) e com a saída do pipeline.
-2. Log de tratamento cobrindo TODAS as linhas de expected_exceptions.csv, com EX-04..06 travando a publicação.
-3. Reconciliação (ACC-006): totais válidos da origem × processados = diferença zero após exclusões documentadas.
+## Harness e suites faseadas
 
-A guarda que reprova módulo fora da lista observacional é **lista de nomes de arquivo, não verificação de comportamento** — limitação registrada em `.project/KNOWN_ISSUES.md` (KI-001); o gate real do trabalho que produz número é o `/change-number`. O CI (`.github/ci/run-checks.sh`, guarda 4) passa a EXIGIR o harness assim que `src/` existir, e a guarda 3b instala as dependências declaradas antes disso. Golden rodam before/after em todo /change-number; refatoração do motor re-roda os golden do critério vigente no mesmo ciclo.
+O harness base mantém as quatro suites do ciclo 1. As guardas 4b–4g do CI executam as suites faseadas:
+
+**Suite 1 — Diagnóstico da fonte (observacional).** Recomputa contagens, vazios, duplicados e chaves sem correspondência; confere cobertura de EX-01..07; prova que nada foi tratado; determinismo e integridade da origem; nenhum campo de indicador na saída.
+
+**Suite 2 — Caminho `.xlsx`.** Gera a fixture Excel a partir das CSVs versionadas, roda o mesmo entrypoint e exige resultado idêntico ao caminho CSV, com o arquivo intocado. Dependência declarada em `requirements.txt` com hash verificado; sem ela a suite reprova.
+
+**Suite 3 — Textos de apresentação em pt-BR** e decisões pendentes consolidadas.
+
+**Suite 4 — Inventário de módulos.** Compara todo `src/` com `project-plugin/references/modulos.json`, recusa categorias de cálculo e exige decisão, golden e suite para módulo não observacional. A limitação comportamental permanece em KI-001.
+
+- `run_fase2.py`: normalização e colisões.
+- `run_fase3.py`: versão vigente, empate e timestamp inutilizável.
+- `run_fase4.py`: classificação dos pedidos que não entram.
+- `run_fase5.py`: população completa de pedidos e visitas contra os 147 casos.
+- `run_fase6.py`: reconciliação e veredito contra 54 + 18 referências.
+- `run_fase7.py`: determinismo, paridade CSV/Excel, integridade, diagnóstico inalterado e derivabilidade dos GC-01..03 por caminho independente.
+
+A suite de cálculo de margens permanece fora deste ciclo: os GC são apenas recomputados dentro da conferência independente para provar que os insumos da base tratada sustentam os valores aprovados.
 
 ## Demais camadas
 
-- Smoke/E2E: execução ponta a ponta sobre a fixture (Excel → Excel analítico + PDF).
-- Testes de dados: casos duplicados/órfãos/nulos produzem o log esperado.
-- Aceite: ACC-001..006 (ver ACCEPTANCE.md).
+- Smoke/E2E: execução ponta a ponta sobre a fixture (Excel → base tratada → Excel analítico + PDF, conforme o ciclo).
+- Testes de dados: casos duplicados, órfãos, nulos, colisão, empate e fora do período produzem o destino e o escopo de bloqueio esperados.
+- Aceite: ACC-001..007 (ver ACCEPTANCE.md).

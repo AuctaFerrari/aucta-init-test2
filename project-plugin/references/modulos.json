@@ -1,0 +1,54 @@
+{
+  "descricao": "Inventario dos modulos de src/. Registro no nivel do projeto, lido pela guarda 4 do harness. Modulo nao registrado reprova. Registrar um modulo NAO autoriza modulo de calculo: categorias proibidas sao verificadas no harness e nao podem ser liberadas editando este arquivo.",
+  "limitacao_conhecida": "KI-001 em .project/KNOWN_ISSUES.md: conferir caminho de arquivo nao e verificacao de comportamento. O limite de escopo de cada modulo e sustentado pelas suites comportamentais declaradas em 'testes', nao por este inventario.",
+  "modulos": [
+    {
+      "caminho": "src/diagnostico_fonte.py",
+      "categoria": "observacional",
+      "decisao": "",
+      "golden": "",
+      "testes": "tests/golden/run_golden.py",
+      "justificativa": "Descreve a fonte. Nao trata, nao corrige e nao calcula; suites 1 a 3 do harness conferem que a saida nao tem campo de indicador."
+    },
+    {
+      "caminho": "src/identificadores.py",
+      "categoria": "identificadores",
+      "decisao": "DN-11",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase2.py",
+      "justificativa": "Fase 2 do plano aprovado: normaliza identificador, preserva o bruto e trata colisao conforme DN-11, com DN-13 para competencia inutilizavel. Nao monta base tratada, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/versao_pedido.py",
+      "categoria": "versao",
+      "decisao": "DN-14",
+      "golden": "tests/fixtures/golden/fase3/versao_pedido.csv",
+      "testes": "tests/golden/run_fase3.py",
+      "justificativa": "Fase 3 do plano aprovado: agrupa versoes pelo pedido_id normalizado (DN-11) e escolhe a versao vigente por TRUTH-011, com DN-04 para empate e DN-14 para timestamp inutilizavel. Nao filtra situacao de pedido, nao monta base tratada, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/pedidos_nao_entram.py",
+      "categoria": "tratamento_pedidos",
+      "decisao": "DN-06",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase4.py",
+      "justificativa": "Fase 4: classifica cada pedido entre candidato a base tratada, exclusao documentada, quarentena e fora do periodo. Nao classifica visitas, nao reconcilia e nao calcula."
+    },
+    {
+      "caminho": "src/base_tratada.py",
+      "categoria": "base_tratada",
+      "decisao": "DN-07",
+      "golden": "tests/fixtures/golden/base-tratada/populacao.csv",
+      "testes": "tests/golden/run_fase5.py",
+      "justificativa": "Fase 5: compoe a populacao oficial de pedidos e classifica visitas, preservando origem e bloqueios. Nao reconcilia e nao calcula indicador."
+    },
+    {
+      "caminho": "src/relatorio_tratamento.py",
+      "categoria": "reconciliacao",
+      "decisao": "DN-10",
+      "golden": "tests/fixtures/golden/base-tratada/reconciliacao.csv",
+      "testes": "tests/golden/run_fase6.py",
+      "justificativa": "Fase 6: materializa as saidas oficiais, prova conservacao em cinco populacoes e emite veredito por competencia. Nao calcula margem ou indicador."
+    }
+  ]
+}

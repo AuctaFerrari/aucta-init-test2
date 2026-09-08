@@ -17,13 +17,16 @@ Suites:
      (contrato ASCII preservado no JSON, rotulo acentuado no Markdown, coluna de
      status da evidencia) e decisoes pendentes consolidadas: D-003 e D-006
      seguem como dois achados, com uma unica decisao no resumo.
-  4. Margens / golden cases (tests/fixtures/golden_cases.csv) — NAO IMPLEMENTADA
-     nesta versao: nao existe modulo de calculo no repositorio e as formulas
-     TRUTH-001..005 seguem pendentes de validacao formal da controladoria
-     (gate do primeiro /change-number). A suite FALHA de proposito se aparecer
-     em `src/` qualquer modulo fora da lista observacional. ATENCAO: essa
-     verificacao e uma lista de nomes de arquivo, nao uma analise de
-     comportamento — limitacao registrada em .project/KNOWN_ISSUES.md (KI-001).
+  4. Inventario de modulos de src/ (guarda de modulo de calculo). O inventario
+     vive FORA deste arquivo, em project-plugin/references/modulos.json. A suite
+     reprova: modulo de src/ nao registrado; caminho registrado inexistente;
+     categoria proibida (nenhum modulo de calculo e autorizado pelo inventario);
+     modulo nao observacional sem decisao DN-xx, sem golden existente ou sem
+     suite existente; e suite declarada que o CI nao invoca. A suite de margens
+     em si segue NAO IMPLEMENTADA: nao existe modulo de calculo no repositorio.
+     ATENCAO: conferir caminho de arquivo nao e analise de comportamento —
+     limitacao registrada em .project/KNOWN_ISSUES.md (KI-001); o limite de
+     escopo real vem das suites declaradas em "testes" no inventario.
 
 Uso: python tests/golden/run_golden.py
 """
@@ -43,11 +46,23 @@ RAIZ = Path(__file__).resolve().parents[2]
 FIXTURES = RAIZ / "tests" / "fixtures"
 SRC = RAIZ / "src"
 
-# Modulos observacionais conhecidos (nao produzem numero entregue ao cliente).
-# LIMITACAO CONHECIDA: e uma lista de NOMES, nao uma verificacao de
-# comportamento. Ver .project/KNOWN_ISSUES.md (KI-001) e a demanda aberta no
-# aucta-dev-core. Nao corrigir aqui: correcao estrutural e demanda separada.
-MODULOS_OBSERVACIONAIS = {"diagnostico_fonte.py"}
+# Inventario de modulos: registro no NIVEL DO PROJETO, fora deste arquivo de
+# teste. Modulo de src/ nao registrado reprova a suite 4.
+INVENTARIO = RAIZ / "project-plugin" / "references" / "modulos.json"
+
+# Categorias proibidas ficam AQUI, e nao no inventario, de proposito: registrar
+# um modulo no inventario nunca autoriza um modulo de calculo. Liberar calculo
+# exige mudar o harness, sob revisao, e a suite de margens implementada.
+CATEGORIAS_PROIBIDAS = {"calculo", "calculo_margens", "indicador", "margem", "rentabilidade"}
+# Modulo nao observacional precisa citar decisao aprovada, golden e suite propria.
+CATEGORIA_SEM_EXIGENCIA = "observacional"
+
+# LIMITACAO CONHECIDA (KI-001, aberta): conferir caminho de arquivo nao e
+# verificacao de comportamento. O que sustenta o limite de escopo de cada modulo
+# sao as suites comportamentais declaradas em "testes" no inventario — para o
+# diagnostico, as suites 1 a 3 deste arquivo; para a fase 2, tests/golden/
+# run_fase2.py. A correcao estrutural da guarda segue como demanda do
+# aucta-dev-core e NAO foi resolvida aqui.
 
 # Abas correspondentes a cada CSV de fixture (usado para gerar a fixture .xlsx).
 CONTRATO_ABAS = {
@@ -435,18 +450,62 @@ def suite_textos(payload: dict, markdown: str) -> None:
 
 
 def suite_margens() -> None:
-    print("== Suite 4: margens / golden cases (GC-01..03) ==")
-    modulos = sorted(p.name for p in SRC.glob("*.py")) if SRC.exists() else []
-    fora_da_lista = [m for m in modulos if m not in MODULOS_OBSERVACIONAIS]
-    if fora_da_lista:
-        checar(False, "modulo de calculo em src/ exige a suite de margens implementada",
-               f"modulos nao observacionais: {fora_da_lista}")
+    print("== Suite 4: inventario de modulos de src/ (guarda de modulo de calculo) ==")
+    if not INVENTARIO.exists():
+        checar(False, "inventario de modulos presente no projeto",
+               f"ausente: {INVENTARIO.relative_to(RAIZ)}")
         return
-    golden = ler("golden_cases.csv")
-    checar(len(golden) == 3, "golden_cases.csv preservado (GC-01..03)", f"{len(golden)} caso(s)")
-    print("  PENDENTE (nao aplicavel nesta versao): sem modulo de calculo em src/; "
-          "formulas TRUTH-001..005 aguardam validacao formal da controladoria "
-          "(gate do primeiro /change-number).")
+    try:
+        inventario = json.loads(INVENTARIO.read_text(encoding="utf-8"))
+        registrados = {item["caminho"]: item for item in inventario["modulos"]}
+    except Exception as erro:  # noqa: BLE001
+        checar(False, "inventario de modulos legivel", repr(erro))
+        return
+
+    modulos = sorted(str(p.relative_to(RAIZ)) for p in SRC.rglob("*.py")) if SRC.exists() else []
+    nao_registrados = [m for m in modulos if m not in registrados]
+    checar(not nao_registrados,
+           "todo modulo de src/ esta registrado no inventario do projeto",
+           f"nao registrados: {nao_registrados} — registrar em "
+           f"{INVENTARIO.relative_to(RAIZ)} com categoria, decisao aprovada, golden e suite")
+
+    inexistentes = [c for c in registrados if not (RAIZ / c).exists()]
+    checar(not inexistentes,
+           "todo caminho do inventario existe (renomear modulo sem atualizar reprova)",
+           f"inexistentes: {inexistentes}")
+
+    proibidas = sorted(c for c, item in registrados.items()
+                       if item.get("categoria", "").lower() in CATEGORIAS_PROIBIDAS)
+    checar(not proibidas,
+           "nenhum modulo de calculo autorizado pelo inventario",
+           f"modulos com categoria proibida: {proibidas} — as formulas TRUTH-001..005 exigem "
+           "a suite de margens implementada e ciclo /change-number proprio")
+
+    faltando = []
+    for caminho, item in sorted(registrados.items()):
+        if item.get("categoria") == CATEGORIA_SEM_EXIGENCIA:
+            continue
+        for campo, criterio in (("decisao", lambda v: v.startswith("DN-")),
+                                ("golden", lambda v: bool(v) and (RAIZ / v).exists()),
+                                ("testes", lambda v: bool(v) and (RAIZ / v).exists())):
+            valor = item.get(campo, "")
+            if not (isinstance(valor, str) and criterio(valor)):
+                faltando.append(f"{caminho}.{campo}={valor!r}")
+    checar(not faltando,
+           "modulo nao observacional cita decisao aprovada, golden e suite existentes",
+           f"pendencias: {faltando}")
+
+    ci = (RAIZ / ".github" / "ci" / "run-checks.sh")
+    texto_ci = ci.read_text(encoding="utf-8") if ci.exists() else ""
+    sem_ci = sorted({item["testes"] for item in registrados.values()
+                     if item.get("testes") and item["testes"] not in texto_ci})
+    checar(not sem_ci,
+           "toda suite declarada no inventario e executada pelo CI",
+           f"nao invocadas em .github/ci/run-checks.sh: {sem_ci}")
+
+    print("  PENDENTE (nao aplicavel nesta versao): suite de margens sobre um modulo de "
+          "calculo; nenhum existe e as formulas seguem sem implementacao. ATENCAO: esta "
+          "guarda confere caminho de arquivo, nao comportamento (KI-001).")
 
 
 def main() -> int:
