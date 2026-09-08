@@ -78,4 +78,16 @@ else
   echo "ok: sem código sob teste ainda"
 fi
 
+echo "== 4c. Conferência da fase 3 — versão que vale de cada pedido (TRUTH-011, DN-04, DN-14) =="
+if [ -d src ]; then
+  if [ -f tests/golden/run_fase3.py ]; then
+    "$PY_HARNESS" tests/golden/run_fase3.py || { echo "FALHA: conferência da fase 3 não passou"; fail=1; }
+  else
+    echo "FALHA: tests/golden/run_fase3.py ausente — a fase 3 está registrada no inventário de módulos"
+    fail=1
+  fi
+else
+  echo "ok: sem código sob teste ainda"
+fi
+
 exit $fail
