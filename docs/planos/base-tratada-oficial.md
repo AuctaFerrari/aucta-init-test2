@@ -28,7 +28,7 @@ O cálculo de margens usa as fórmulas TRUTH-001..005, agora aprovadas, mas depe
 | Fase | Nome de negócio | O que o consultor vê no fim da fase | Estado |
 | --- | --- | --- | --- |
 | 1 | Referência de conferência do tratamento | Arquivo com a base tratada esperada e a quarentena esperada, calculadas **fora** do programa que será construído — a resposta existe antes do código | **concluída** — golden derivados de forma independente em `tests/fixtures/golden/base-tratada/`, cobrindo a fixture atual e cinco cenários adversariais |
-| 2 | Identificadores padronizados | Cada identificador corrigido aparece no log com valor anterior → valor novo e a regra que autorizou | não iniciada |
+| 2 | Identificadores padronizados | Cada identificador corrigido aparece no log com valor anterior → valor novo e a regra que autorizou | **concluída** — `src/identificadores.py` com DN-11 e DN-13, conferido por `tests/golden/run_fase2.py` (7 suites) e pela guarda 4b do CI |
 | 3 | Versão que vale de cada pedido | Para cada pedido repetido, qual versão entrou, qual foi descartada e por quê | não iniciada |
 | 4 | Pedidos que não entram | Duas listas separadas: excluídos por regra (cancelados) e retidos por falta de informação (quarentena), cada um com o motivo e o código da exceção | não iniciada |
 | 5 | Base tratada oficial e visitas válidas | A base tratada em si, com os dados do cliente já cruzados, e as visitas classificadas em válida / não realizada / exceção | não iniciada |
@@ -36,6 +36,49 @@ O cálculo de margens usa as fórmulas TRUTH-001..005, agora aprovadas, mas depe
 | 7 | Conferência independente | Conferência que recalcula tudo por caminho próprio, reproduz os insumos de GC-01..03 a partir da base tratada e prova que o diagnóstico do ciclo anterior não mudou | não iniciada |
 
 A ordem é obrigatória: a fase 1 existe porque a resposta esperada nunca pode ser produzida pelo programa que está sendo testado (D10 — golden antes da implementação).
+
+## Evidência da fase 2 — identificadores padronizados
+
+**Testes antes do código.** A conferência foi commitada primeiro e reprovou pelo motivo esperado, verbatim:
+
+```
+Conferencia da fase 2 (identificadores)
+  FALHA: modulo de producao ausente: src/identificadores.py
+RESULTADO: 1 falha — implementacao da fase 2 ainda nao existe
+exit=1
+```
+
+**Falha inicial da guarda 4**, com o módulo novo presente e a allowlist de nomes ainda em vigor:
+
+```
+== Suite 4: margens / golden cases (GC-01..03) ==
+  FALHA: modulo de calculo em src/ exige a suite de margens implementada —
+  modulos nao observacionais: ['identificadores.py']
+```
+
+**Registro estreito de módulo.** A allowlist saiu do arquivo de teste e virou `project-plugin/references/modulos.json`, com caminho, categoria, decisão aprovada, golden que cobre o módulo, suite que o confere e justificativa. As categorias proibidas ficam no harness, não no inventário: registrar um módulo nunca autoriza módulo de cálculo. O módulo não foi escondido fora de `src/`, não foi renomeado para se passar por observacional e a guarda não foi afrouxada para módulo arbitrário. KI-001 segue **aberta**.
+
+**Testes positivos.** Sete suites verdes: normalização caso a caso (13 casos), fixture atual com O004 e rastreabilidade do bruto, escopo, colisão delimitável (A2 — 6 registros afetados e competências 2026-01 e 2026-03 conferidos contra o golden), colisão sem delimitação (A5 — exit 5 controlado, sem saída oficial, DN-13 citada), ausência de last-write-wins e cenários sem colisão (A1, A3, A4).
+
+**Provas negativas da guarda**, todas reprovando como devem: módulo não registrado; módulo com categoria de cálculo; registro da suite removido do inventário; invocação da suite removida do CI; caminho do módulo alterado sem atualizar o inventário.
+
+**CI final em clone limpo: exit 0, 109 verificações** (46 do harness principal + 63 da conferência da fase 2).
+
+**Commits da fase 2, na ordem lógica:**
+
+| Commit | Conteúdo |
+| --- | --- |
+| `4b7175e` | `tests/golden/run_fase2.py` — conferência antes do código |
+| `934668b` | guarda 4b no CI, executando a conferência da fase 2 |
+| `55e662b` | `project-plugin/references/modulos.json` — registro estreito |
+| `cd319ec` | suite 4 do harness passa a ler o inventário do projeto |
+| `7cbd3c7` | `src/identificadores.py` — implementação mínima |
+
+**Nenhum comportamento das fases 3 a 7 foi implementado.** A suite C confere estruturalmente: nenhuma chave de fase posterior na saída, `regras_aplicadas` restrito a DN-11 e DN-13, `src/` apenas com o módulo observacional e o da fase 2, e o código da fase 2 sem menção a `atualizado_em`, `Cancelado`, `receita_bruta` ou `custo_produto`.
+
+**Nada de valor aprovado mudou.** `custo_por_visita_realizada` segue em **R$ 100,00** em `.project/PARAMETERS.md`, com o status observado `Provisório` preservado em `tests/fixtures/parametros.csv`; GC-01 (R$ 330,00), GC-02 (R$ 120,00) e GC-03 (R$ 400,00) e a tolerância R$ 0,00 seguem intocados; as cinco fixtures de origem seguem byte-idênticas à `main`.
+
+**Efeito medido da fase 2, sem calcular margem:** pedidos sem correspondência no cadastro passam de 2 (O004, O010) para 1 (O010); C003 em 2026-01 passa de 2 para 3 linhas de pedido vinculadas; 1 normalização aplicada (O004: `" c003 "` → `C003`); nenhuma colisão na fixture atual.
 
 ## Fluxo antes → depois
 
