@@ -1,4 +1,4 @@
-# CODEOWNERS — gerado pelo init-repo a partir de OWNERS.md
+# CODEOWNERS — gerado pelo plan-repo a partir de OWNERS.md
 # Owner técnico revisa tudo por padrão; refine por pasta quando houver mais revisores.
 
 * @<owner-tecnico>

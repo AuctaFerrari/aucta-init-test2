@@ -15,4 +15,4 @@ Core de referência: `AuctaFerrari/aucta-dev-core` @ `e525e82` (2026-09-02).
 
 Enquanto `andrej-karpathy-skills` estiver pendente, os workflows operam com o fallback documentado: princípios de simplicidade/mudança cirúrgica embutidos nos próprios workflows.
 
-Drift check: executado pelo init-check e sob demanda, comparando git blob SHA local do core vs upstream HEAD — divergência sinaliza sem bloquear (regras no MANIFEST do core).
+Drift check: executado pelo plan-check e sob demanda, comparando git blob SHA local do core vs upstream HEAD — divergência sinaliza sem bloquear (regras no MANIFEST do core).

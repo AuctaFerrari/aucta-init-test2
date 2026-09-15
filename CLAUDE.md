@@ -1,6 +1,6 @@
 # CLAUDE.md — Aucta Foods — Rentabilidade por Cliente e Cobertura Comercial
 
-Padrão Aucta (gerado pelo /init). Minimal context for ANY agent session opened in this repo — read before acting.
+Padrão Aucta (gerado pelo /aucta-dev-plan). Minimal context for ANY agent session opened in this repo — read before acting.
 
 ## Read first (in order)
 

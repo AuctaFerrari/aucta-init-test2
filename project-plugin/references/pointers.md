@@ -13,7 +13,7 @@ Ordem de leitura na abertura de sessão (6.5): PROJECT.md + TRUTHS.md + Issue/Sp
 | OWNERS.md | `/OWNERS.md` | Ana Martins (sponsor) · Bruno Lima (valida número) · consultor (técnico) |
 | DATA_CATALOG.md | `/.project/DATA_CATALOG.md` | Fonte única + armadilhas de qualidade mapeadas |
 | Known issues | `/.project/KNOWN_ISSUES.md` | KI-001 — guarda de módulos por nome de arquivo |
-| Estado do /init | `/.project/init-state.md` | Progresso, premissas, blockers, `GATE-CN-01`, exceções formais EF-002 a EF-004 |
+| Estado do /aucta-dev-plan | `/.project/init-state.md` | Progresso, premissas, blockers, `GATE-CN-01`, exceções formais EF-002 a EF-004 |
 | Plano aprovado do ciclo | `/docs/planos/base-tratada-oficial.md` | Plano Visual Faseado de **sete fases**, aprovado prospectivamente em 2026-09-08. Fases 1 a 7 concluídas no ramo limpo |
 | Fixtures de origem | `/tests/fixtures/*.csv` | Massa sintética oficial (jan–mar/2026) — **imutáveis**, inclusive `parametros.csv` com o status observado da fonte |
 | Golden cases de margem | `/tests/fixtures/golden_cases.csv` | GC-01..03 — margens esperadas, tolerância R$ 0,00, aprovados em 2026-09-08 |
