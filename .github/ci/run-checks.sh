@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Checks do projeto Aucta Foods — Rentabilidade por Cliente (tier 2).
-# Adaptado pelo init-repo. Tier >= 2: harness de golden cases com recomputação
+# Adaptado pelo plan-repo. Tier >= 2: harness de golden cases com recomputação
 # INDEPENDENTE (nunca o código sob teste) — obrigatório quando houver código.
 set -euo pipefail
 fail=0

@@ -54,7 +54,7 @@ Sponsor e aprovadora funcional: Ana Martins (Diretora Comercial). Validador dos 
 | ACCEPTANCE.md | raiz | Aceite, definição de pronto e estratégia de provas |
 | OWNERS.md | raiz | Papéis e responsáveis |
 | DATA_CATALOG.md | .project/ | Fontes de dados |
-| init-state.md | .project/ | Estado do /init, premissas, blockers e exceções formais |
+| init-state.md | .project/ | Estado do /aucta-dev-plan, premissas, blockers e exceções formais |
 | KNOWN_ISSUES.md | .project/ | Limitações conhecidas ainda relevantes |
 | Plano da feature | docs/planos/ | Plano visual faseado de cada mudança |
 | Runbook do diagnóstico | docs/runbook/diagnostico-fonte.md | Como o analista roda o diagnóstico da base do mês |
